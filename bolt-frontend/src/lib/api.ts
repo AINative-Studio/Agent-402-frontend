@@ -1,126 +1,72 @@
-import { supabase } from './supabase';
+import { apiClient } from './apiClient';
 import type { Agent, X402Request, AgentMemory, ComplianceEvent, Run, RunStats } from './types';
 
-export async function getAgents(): Promise<Agent[]> {
-  const { data, error } = await supabase
-    .from('agents')
-    .select('*')
-    .order('created_at', { ascending: true });
+// Get current project ID from context or localStorage
+function getProjectId(): string {
+  return localStorage.getItem('projectId') || 'default';
+}
 
-  if (error) throw error;
-  return data || [];
+export async function getAgents(): Promise<Agent[]> {
+  const projectId = getProjectId();
+  const response = await apiClient.get(`/${projectId}/agents`);
+  return response.data.items || response.data || [];
 }
 
 export async function getRuns(): Promise<Run[]> {
-  const { data: x402Data } = await supabase
-    .from('x402_requests')
-    .select('run_id, created_at');
-
-  if (!x402Data || x402Data.length === 0) return [];
-
-  const runMap = new Map<string, { created_at: string; x402_count: number; memory_count: number; compliance_count: number }>();
-
-  for (const item of x402Data) {
-    if (!runMap.has(item.run_id)) {
-      runMap.set(item.run_id, {
-        created_at: item.created_at,
-        x402_count: 0,
-        memory_count: 0,
-        compliance_count: 0,
-      });
-    }
-    runMap.get(item.run_id)!.x402_count++;
-  }
-
-  const { data: memoryData } = await supabase
-    .from('agent_memory')
-    .select('run_id');
-
-  if (memoryData) {
-    for (const item of memoryData) {
-      if (runMap.has(item.run_id)) {
-        runMap.get(item.run_id)!.memory_count++;
-      }
-    }
-  }
-
-  const { data: complianceData } = await supabase
-    .from('compliance_events')
-    .select('run_id');
-
-  if (complianceData) {
-    for (const item of complianceData) {
-      if (runMap.has(item.run_id)) {
-        runMap.get(item.run_id)!.compliance_count++;
-      }
-    }
-  }
-
-  const runs: Run[] = Array.from(runMap.entries()).map(([run_id, data]) => ({
-    run_id,
-    status: 'completed' as const,
-    created_at: data.created_at,
-    x402_count: data.x402_count,
-    memory_count: data.memory_count,
-    compliance_count: data.compliance_count,
-  }));
-
-  return runs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const projectId = getProjectId();
+  const response = await apiClient.get(`/${projectId}/runs`);
+  return response.data.items || response.data || [];
 }
 
 export async function getRunStats(): Promise<RunStats> {
   const runs = await getRuns();
 
-  const { count: x402Count } = await supabase
-    .from('x402_requests')
-    .select('*', { count: 'exact', head: true });
+  // Calculate stats from runs
+  const total = runs.length;
+  const pending = runs.filter(r => r.status === 'pending').length;
+  const running = runs.filter(r => r.status === 'running').length;
+  const completed = runs.filter(r => r.status === 'completed').length;
+  const failed = runs.filter(r => r.status === 'failed').length;
 
-  const { count: memoryCount } = await supabase
-    .from('agent_memory')
-    .select('*', { count: 'exact', head: true });
-
-  const { count: complianceCount } = await supabase
-    .from('compliance_events')
-    .select('*', { count: 'exact', head: true });
+  // Get latest run
+  const sortedRuns = [...runs].sort((a, b) =>
+    new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
+  );
 
   return {
-    total_runs: runs.length,
-    latest_run: runs[0],
-    total_x402_requests: x402Count || 0,
-    total_memory_entries: memoryCount || 0,
-    total_compliance_events: complianceCount || 0,
+    total,
+    pending,
+    running,
+    completed,
+    failed,
+    total_runs: total,
+    latest_run: sortedRuns[0] || null,
+    total_x402_requests: 0, // Will be fetched separately if needed
+    total_memory_entries: 0,
+    total_compliance_events: 0,
   };
 }
 
 export async function getX402RequestsByRun(runId: string): Promise<X402Request[]> {
-  const { data, error } = await supabase
-    .from('x402_requests')
-    .select('*')
-    .eq('run_id', runId)
-    .order('created_at', { ascending: true });
-
-  if (error) throw error;
-  return data || [];
+  const projectId = getProjectId();
+  const response = await apiClient.get(`/${projectId}/x402-requests`, {
+    params: { run_id: runId }
+  });
+  return response.data.items || response.data || [];
 }
 
 export async function getAgentMemoryByRun(runId: string): Promise<AgentMemory[]> {
-  const { data, error } = await supabase
-    .from('agent_memory')
-    .select('*')
-    .eq('run_id', runId)
-    .order('created_at', { ascending: true });
-
-  if (error) throw error;
-  return data || [];
+  const projectId = getProjectId();
+  const response = await apiClient.get(`/${projectId}/agent-memory`, {
+    params: { run_id: runId }
+  });
+  return response.data.items || response.data || [];
 }
 
 export async function getComplianceEventsByRun(runId: string): Promise<ComplianceEvent[]> {
-  const { data, error } = await supabase
-    .from('compliance_events')
-    .select('*')
-    .eq('run_id', runId)
-    .order('created_at', { ascending: true });
-
-  if (error) throw error;
-  return data || [];
+  const projectId = getProjectId();
+  const response = await apiClient.get(`/${projectId}/compliance-events`, {
+    params: { run_id: runId }
+  });
+  return response.data.items || response.data || [];
 }
