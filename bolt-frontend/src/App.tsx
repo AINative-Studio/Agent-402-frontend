@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
 import { AuthProvider } from './contexts/AuthContext';
+import { ProjectProvider } from './contexts/ProjectContext';
 import { Layout } from './components/layout/Layout';
 import { Overview } from './pages/Overview';
 import { RunsList } from './pages/RunsList';
@@ -15,20 +16,22 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Overview />} />
-              <Route path="runs" element={<RunsList />} />
-              <Route path="runs/:runId" element={<RunDetail />} />
-              <Route path="runs/:runId/x402" element={<X402Inspector />} />
-              <Route path="runs/:runId/memory" element={<MemoryViewer />} />
-              <Route path="runs/:runId/audit" element={<ComplianceAudit />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
+        <ProjectProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Overview />} />
+                <Route path="runs" element={<RunsList />} />
+                <Route path="runs/:runId" element={<RunDetail />} />
+                <Route path="runs/:runId/x402" element={<X402Inspector />} />
+                <Route path="runs/:runId/memory" element={<MemoryViewer />} />
+                <Route path="runs/:runId/audit" element={<ComplianceAudit />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </ProjectProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
