@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, PlayCircle, Search, Table2, Bot, Activity, Database } from 'lucide-react';
+import { LayoutDashboard, PlayCircle, Bot, Activity, Database } from 'lucide-react';
 import { ProjectSelector } from '../ProjectSelector';
 
 export function Sidebar() {
@@ -10,12 +10,11 @@ export function Sidebar() {
     return location.pathname.startsWith(path);
   };
 
+  // Navigation per PRD Section 4
   const navItems = [
     { path: '/', label: 'Overview', icon: LayoutDashboard },
     { path: '/runs', label: 'Runs', icon: PlayCircle },
     { path: '/agents', label: 'Agents', icon: Bot },
-    { path: '/embeddings', label: 'Embeddings', icon: Search },
-    { path: '/tables', label: 'Tables', icon: Table2 },
   ];
 
   return (
