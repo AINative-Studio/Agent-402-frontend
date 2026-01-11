@@ -13,6 +13,7 @@ import { ComplianceAudit } from './pages/ComplianceAudit';
 import { Embeddings } from './pages/Embeddings';
 import { Tables } from './pages/Tables';
 import { TableDetail } from './pages/TableDetail';
+import { Agents } from './pages/Agents';
 import { Login } from './pages/Login';
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
                 <Route path="runs/:runId/x402" element={<X402Inspector />} />
                 <Route path="runs/:runId/memory" element={<MemoryViewer />} />
                 <Route path="runs/:runId/audit" element={<ComplianceAudit />} />
+                <Route path="agents" element={<Agents />} />
                 <Route path="embeddings" element={<Embeddings />} />
                 <Route path="tables" element={<Tables />} />
                 <Route path="tables/:tableId" element={<TableDetail />} />

@@ -10,12 +10,17 @@ export const agentKeys = {
   detail: (projectId: string, id: string) => [...agentKeys.details(), projectId, id] as const,
 };
 
+interface AgentListResponse {
+  items?: Agent[];
+  data?: Agent[];
+}
+
 export function useAgents(projectId?: string) {
   return useQuery({
     queryKey: agentKeys.list(projectId!),
     queryFn: async () => {
-      const { data } = await apiClient.get<Agent[]>(`/${projectId}/agents`);
-      return Array.isArray(data) ? data : data.items || [];
+      const { data } = await apiClient.get<AgentListResponse>(`/${projectId}/agents`);
+      return data.items || data.data || [];
     },
     enabled: !!projectId,
   });

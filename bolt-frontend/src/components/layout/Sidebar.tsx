@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, PlayCircle, Database, Shield, Activity, Search, Table2 } from 'lucide-react';
+import { LayoutDashboard, PlayCircle, Database, Shield, Activity, Search, Table2, Bot } from 'lucide-react';
 import { ProjectSelector } from '../ProjectSelector';
 
 export function Sidebar() {
@@ -13,6 +13,7 @@ export function Sidebar() {
   const navItems = [
     { path: '/', label: 'Overview', icon: LayoutDashboard },
     { path: '/runs', label: 'Runs', icon: PlayCircle },
+    { path: '/agents', label: 'Agents', icon: Bot },
     { path: '/embeddings', label: 'Embeddings', icon: Search },
     { path: '/tables', label: 'Tables', icon: Table2 },
   ];
