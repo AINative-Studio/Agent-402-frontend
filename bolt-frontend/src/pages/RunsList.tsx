@@ -1,28 +1,11 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PlayCircle, Key, Database, Shield, ArrowRight, Calendar } from 'lucide-react';
-import { getRuns } from '../lib/api';
-import type { Run } from '../lib/types';
+import { PlayCircle, Key, Database, Shield, ArrowRight, Calendar, AlertCircle } from 'lucide-react';
+import { useRuns } from '../hooks/useRuns';
+import { useProject } from '../hooks/useProject';
 
 export function RunsList() {
-  const [runs, setRuns] = useState<Run[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadRuns();
-  }, []);
-
-  const loadRuns = async () => {
-    try {
-      setLoading(true);
-      const data = await getRuns();
-      setRuns(data);
-    } catch (err) {
-      console.error('Failed to load runs:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { currentProject } = useProject();
+  const { data: runs = [], isLoading, error } = useRuns(currentProject?.project_id);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleString('en-US', {
@@ -45,7 +28,25 @@ export function RunsList() {
     }
   };
 
-  if (loading) {
+  // Handle no project selected
+  if (!currentProject) {
+    return (
+      <div className="p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center py-16">
+            <div className="w-16 h-16 bg-[var(--surface-2)] rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <PlayCircle className="w-8 h-8 text-[var(--muted)]" />
+            </div>
+            <h2 className="text-2xl font-semibold mb-2">No Project Selected</h2>
+            <p className="text-[var(--muted)]">Please select a project to view runs</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle loading state
+  if (isLoading) {
     return (
       <div className="p-8">
         <div className="max-w-6xl mx-auto">
@@ -53,6 +54,23 @@ export function RunsList() {
             {[...Array(3)].map((_, i) => (
               <div key={i} className="h-32 bg-[var(--surface)] rounded-2xl" />
             ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center py-16">
+            <div className="w-16 h-16 bg-[var(--danger)]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8 text-[var(--danger)]" />
+            </div>
+            <h2 className="text-2xl font-semibold mb-2">Error Loading Runs</h2>
+            <p className="text-[var(--muted)]">{error instanceof Error ? error.message : 'Failed to load runs'}</p>
           </div>
         </div>
       </div>
