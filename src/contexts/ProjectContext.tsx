@@ -22,7 +22,17 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     const fetchProjects = async () => {
       try {
         const response = await apiClient.get('/projects');
-        const projectsList: Project[] = response.data.items || response.data || [];
+        // Backend returns { projects: [...], total: N }
+        const rawProjects = response.data.projects || response.data.items || [];
+        // Map backend format to frontend Project type
+        const projectsList: Project[] = rawProjects.map((p: Record<string, unknown>) => ({
+          project_id: (p.id as string) || (p.project_id as string) || '',
+          name: (p.name as string) || '',
+          description: p.description as string | undefined,
+          tier: ((p.tier as string) || 'free').toLowerCase() as 'free' | 'pro' | 'enterprise',
+          created_at: (p.created_at as string) || new Date().toISOString(),
+          updated_at: (p.updated_at as string) || new Date().toISOString(),
+        }));
         setProjects(projectsList);
 
         // Try to restore saved project
