@@ -5,6 +5,8 @@ import { useMemories } from '../hooks/useMemory';
 import { useProject } from '../hooks/useProject';
 import type { AgentMemory } from '../lib/types';
 
+type Memory = AgentMemory;
+
 export function MemoryViewer() {
   const { runId } = useParams<{ runId: string }>();
   const { currentProject } = useProject();
@@ -15,10 +17,10 @@ export function MemoryViewer() {
     { runId }
   );
 
-  const roles = ['all', ...Array.from(new Set(memories.map(m => m.agent_role).filter(Boolean)))];
+  const roles: string[] = ['all', ...Array.from(new Set(memories.map((m: Memory) => m.agent_role).filter(Boolean) as string[]))];
   const filteredMemories = filter === 'all'
     ? memories
-    : memories.filter(m => m.agent_role === filter);
+    : memories.filter((m: Memory) => m.agent_role === filter);
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -86,7 +88,7 @@ export function MemoryViewer() {
           </div>
 
           <div className="flex gap-2">
-            {roles.map((role) => (
+            {roles.map((role: string) => (
               <button
                 key={role}
                 onClick={() => setFilter(role)}
@@ -109,7 +111,7 @@ export function MemoryViewer() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
-            {filteredMemories.map((memory) => {
+            {filteredMemories.map((memory: Memory) => {
               const roleColor = getRoleColor(memory.agent_role || 'unknown');
               return (
                 <div

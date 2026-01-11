@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { Activity, Key, Database, Shield, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
 import { useProjectStats } from '../hooks/useRuns';
 import { useProject } from '../hooks/useProject';
-import type { RunStats } from '../lib/types';
 
 export function Overview() {
   const { currentProject } = useProject();

@@ -15,7 +15,7 @@ export function useX402Requests(projectId?: string, runId?: string) {
     queryKey: x402Keys.list(projectId!, runId),
     queryFn: async () => {
       const params = runId ? { run_id: runId } : {};
-      const { data } = await apiClient.get<X402Request[]>(`/${projectId}/x402-requests`, { params });
+      const { data } = await apiClient.get<X402Request[] | { items: X402Request[] }>(`/${projectId}/x402-requests`, { params });
       return Array.isArray(data) ? data : data.items || [];
     },
     enabled: !!projectId,

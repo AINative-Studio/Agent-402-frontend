@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, PlayCircle, Database, Shield, Activity, Search, Table2, Bot } from 'lucide-react';
+import { LayoutDashboard, PlayCircle, Search, Table2, Bot, Activity, Database } from 'lucide-react';
 import { ProjectSelector } from '../ProjectSelector';
 
 export function Sidebar() {

@@ -5,6 +5,8 @@ import { useX402Requests } from '../hooks/useX402';
 import { useProject } from '../hooks/useProject';
 import type { X402Request } from '../lib/types';
 
+type Request = X402Request;
+
 export function X402Inspector() {
   const { runId } = useParams<{ runId: string }>();
   const { currentProject } = useProject();
@@ -63,7 +65,7 @@ export function X402Inspector() {
           </div>
         ) : (
           <div className="space-y-4">
-            {requests.map((request) => (
+            {requests.map((request: Request) => (
               <div
                 key={request.request_id || request.id}
                 className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6"
@@ -132,7 +134,7 @@ export function X402Inspector() {
                             <Copy className="w-3 h-3 text-[var(--muted)]" />
                           </button>
                           <button
-                            onClick={() => setExpandedId(expandedId === (request.request_id || request.id) ? null : (request.request_id || request.id))}
+                            onClick={() => setExpandedId(expandedId === (request.request_id ?? request.id ?? null) ? null : (request.request_id ?? request.id ?? null))}
                             className="ml-auto text-xs text-[var(--primary)] hover:underline"
                           >
                             {expandedId === (request.request_id || request.id) ? 'Collapse' : 'Expand'}

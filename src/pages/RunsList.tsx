@@ -120,7 +120,7 @@ export function RunsList() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-[var(--muted)]">
                       <Calendar className="w-4 h-4" />
-                      {formatDate(run.created_at)}
+                      {run.created_at ? formatDate(run.created_at) : 'N/A'}
                     </div>
                   </div>
                   <ArrowRight className="w-5 h-5 text-[var(--muted)]" />

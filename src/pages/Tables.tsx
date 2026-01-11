@@ -17,7 +17,7 @@ export function Tables() {
     if (!newTableName.trim()) return;
 
     createMutation.mutate({
-      name: newTableName,
+      table_name: newTableName,
       description: newTableDesc,
       schema: {
         fields: {},

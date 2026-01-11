@@ -4,6 +4,8 @@ import { useComplianceEvents } from '../hooks/useCompliance';
 import { useProject } from '../hooks/useProject';
 import type { ComplianceEvent } from '../lib/types';
 
+type Event = ComplianceEvent;
+
 export function ComplianceAudit() {
   const { runId } = useParams<{ runId: string }>();
   const { currentProject } = useProject();
@@ -58,7 +60,7 @@ export function ComplianceAudit() {
           </div>
         ) : (
           <div className="space-y-4">
-            {events.map((event) => {
+            {events.map((event: Event) => {
               const riskLevel = getRiskLevel(event.risk_score);
               return (
                 <div
@@ -118,7 +120,7 @@ export function ComplianceAudit() {
                         <div className="mb-4">
                           <div className="text-xs text-[var(--muted)] mb-2">Checks Performed</div>
                           <div className="flex flex-wrap gap-2">
-                            {event.reason_codes.map((code, index) => (
+                            {event.reason_codes.map((code: string, index: number) => (
                               <span
                                 key={index}
                                 className="px-3 py-1 rounded-lg text-xs font-medium bg-[var(--surface-2)] text-[var(--text)]"

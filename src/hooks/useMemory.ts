@@ -19,7 +19,7 @@ export function useMemories(projectId?: string, filters?: { agentId?: string; ru
       if (filters?.agentId) params.agent_id = filters.agentId;
       if (filters?.runId) params.run_id = filters.runId;
 
-      const { data } = await apiClient.get<AgentMemory[]>(`/${projectId}/agent-memory`, { params });
+      const { data } = await apiClient.get<AgentMemory[] | { items: AgentMemory[] }>(`/${projectId}/agent-memory`, { params });
       return Array.isArray(data) ? data : data.items || [];
     },
     enabled: !!projectId,

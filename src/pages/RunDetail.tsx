@@ -11,10 +11,10 @@ export function RunDetail() {
   const location = useLocation();
   const { currentProject } = useProject();
 
-  const { data: run, isLoading: runLoading, error: runError } = useRunById(currentProject?.id, runId);
-  const { data: x402Requests = [], isLoading: x402Loading } = useX402Requests(currentProject?.id, runId);
-  const { data: memory = [], isLoading: memoryLoading } = useMemories(currentProject?.id, { runId });
-  const { data: compliance = [], isLoading: complianceLoading } = useComplianceEvents(currentProject?.id, runId);
+  const { data: _run, isLoading: runLoading, error: runError } = useRunById(currentProject?.project_id, runId);
+  const { data: x402Requests = [], isLoading: x402Loading } = useX402Requests(currentProject?.project_id, runId);
+  const { data: memory = [], isLoading: memoryLoading } = useMemories(currentProject?.project_id, { runId });
+  const { data: compliance = [], isLoading: complianceLoading } = useComplianceEvents(currentProject?.project_id, runId);
 
   const loading = runLoading || x402Loading || memoryLoading || complianceLoading;
 
@@ -78,8 +78,8 @@ export function RunDetail() {
       title: 'Analyst Agent',
       description: 'Market evaluation and analysis',
       status: 'completed',
-      time: memory.find(m => m.agent_role === 'analyst')?.created_at,
-      data: memory.find(m => m.agent_role === 'analyst'),
+      time: memory.find((m: { agent_role?: string }) => m.agent_role === 'analyst')?.created_at,
+      data: memory.find((m: { agent_role?: string }) => m.agent_role === 'analyst'),
     },
     {
       title: 'Compliance Agent',
@@ -92,8 +92,8 @@ export function RunDetail() {
       title: 'Transaction Agent',
       description: 'Signed request generation',
       status: 'completed',
-      time: x402Requests.find(r => r.did.includes('transaction'))?.created_at,
-      data: x402Requests.find(r => r.did.includes('transaction')),
+      time: x402Requests.find((r) => r.did?.includes('transaction'))?.created_at,
+      data: x402Requests.find((r) => r.did?.includes('transaction')),
     },
     {
       title: 'Server Verification',
