@@ -35,6 +35,18 @@ export function RunDetail() {
 
   const currentTab = tabs.find(tab => location.pathname.endsWith(tab.path)) || tabs[0];
 
+  if (!currentProject) {
+    return (
+      <div className="p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-8 text-center">
+            <p className="text-[var(--muted)]">Please select a project to view run details</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="p-8">
@@ -42,6 +54,19 @@ export function RunDetail() {
           <div className="animate-pulse space-y-6">
             <div className="h-20 bg-[var(--surface)] rounded-2xl" />
             <div className="h-96 bg-[var(--surface)] rounded-2xl" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (runError) {
+    return (
+      <div className="p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-8 text-center">
+            <p className="text-red-500 mb-2">Error loading run details</p>
+            <p className="text-sm text-[var(--muted)]">{runError.message}</p>
           </div>
         </div>
       </div>
