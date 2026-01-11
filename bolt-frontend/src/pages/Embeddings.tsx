@@ -132,27 +132,90 @@ export function Embeddings() {
           </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={searchMutation.isPending || !query.trim()}
-          className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
-        >
-          {searchMutation.isPending ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Searching...
-            </>
-          ) : (
-            <>
-              <Search className="w-4 h-4" />
-              Search
-            </>
-          )}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={searchMutation.isPending || !query.trim()}
+            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+          >
+            {searchMutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Searching...
+              </>
+            ) : (
+              <>
+                <Search className="w-4 h-4" />
+                Search
+              </>
+            )}
+          </button>
+        </form>
+      )}
 
-      {/* Results */}
-      {searchMutation.data && (
+      {/* Store Embedding Form */}
+      {activeTab === 'store' && (
+        <form onSubmit={handleEmbed} className="bg-gray-800 rounded-lg p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Text to Embed
+            </label>
+            <textarea
+              value={embedText}
+              onChange={(e) => setEmbedText(e.target.value)}
+              placeholder="Enter text to create embedding..."
+              rows={4}
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Namespace
+            </label>
+            <input
+              type="text"
+              value={embedNamespace}
+              onChange={(e) => setEmbedNamespace(e.target.value)}
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={embedMutation.isPending || !embedText.trim()}
+            className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+          >
+            {embedMutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Storing...
+              </>
+            ) : (
+              <>
+                <Database className="w-4 h-4" />
+                Store Embedding
+              </>
+            )}
+          </button>
+        </form>
+      )}
+
+      {/* Store Success Message */}
+      {activeTab === 'store' && embedMutation.isSuccess && (
+        <div className="bg-green-900/20 border border-green-800 rounded-lg p-4 text-green-400">
+          Successfully stored embedding! Vector ID: {embedMutation.data.vector_ids?.[0]}
+        </div>
+      )}
+
+      {/* Store Error Message */}
+      {activeTab === 'store' && embedMutation.isError && (
+        <div className="bg-red-900/20 border border-red-800 rounded-lg p-4 text-red-400">
+          Error: {embedMutation.error?.message || 'Failed to store embedding'}
+        </div>
+      )}
+
+      {/* Search Results */}
+      {activeTab === 'search' && searchMutation.data && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">
@@ -201,7 +264,7 @@ export function Embeddings() {
         </div>
       )}
 
-      {searchMutation.isError && (
+      {activeTab === 'search' && searchMutation.isError && (
         <div className="bg-red-900/20 border border-red-800 rounded-lg p-4 text-red-400">
           Error: {searchMutation.error?.message || 'Search failed'}
         </div>
