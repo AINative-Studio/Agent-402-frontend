@@ -1,4 +1,5 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+import type { APIError } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/v1/public';
 
@@ -9,25 +10,36 @@ export const apiClient = axios.create({
   },
 });
 
-// Request interceptor for auth
-apiClient.interceptors.request.use((config) => {
-  const apiKey = localStorage.getItem('apiKey');
-  if (apiKey) {
-    config.headers['X-API-Key'] = apiKey;
-  }
-  return config;
-});
+// Request interceptor - attach API key
+apiClient.interceptors.request.use(
+  (config) => {
+    const apiKey = localStorage.getItem('apiKey');
+    if (apiKey) {
+      config.headers['X-API-Key'] = apiKey;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
-// Response interceptor for errors
+// Response interceptor - handle errors
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // Handle DX Contract errors: { detail, error_code }
-    if (error.response?.data?.error_code) {
-      // Enhance error with backend error code
-      error.errorCode = error.response.data.error_code;
-      error.detail = error.response.data.detail;
+  (error: AxiosError<APIError>) => {
+    if (error.response?.status === 401) {
+      // Clear auth on unauthorized
+      localStorage.removeItem('apiKey');
+      window.location.href = '/login';
     }
-    return Promise.reject(error);
+
+    // Transform to consistent error format
+    const apiError: APIError = error.response?.data || {
+      detail: error.message || 'An unexpected error occurred',
+      error_code: 'UNKNOWN_ERROR',
+    };
+
+    return Promise.reject(apiError);
   }
 );
+
+export default apiClient;
