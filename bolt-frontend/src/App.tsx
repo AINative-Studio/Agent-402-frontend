@@ -21,15 +21,16 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ProjectProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={
-                <ProtectedRoute>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={
+              <ProtectedRoute>
+                <ProjectProvider>
                   <Layout />
-                </ProtectedRoute>
-              }>
+                </ProjectProvider>
+              </ProtectedRoute>
+            }>
                 <Route index element={<Overview />} />
                 <Route path="runs" element={<RunsList />} />
                 <Route path="runs/:runId" element={<RunDetail />} />
@@ -44,7 +45,6 @@ function App() {
               </Route>
             </Routes>
           </BrowserRouter>
-        </ProjectProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -32,6 +32,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Listen for logout events from apiClient (on 401 responses)
+  useEffect(() => {
+    const handleLogout = () => {
+      setAuthState({
+        apiKey: null,
+        isAuthenticated: false,
+        user: null,
+      });
+    };
+
+    window.addEventListener('auth:logout', handleLogout);
+    return () => window.removeEventListener('auth:logout', handleLogout);
+  }, []);
+
   const login = async (apiKey: string) => {
     // Store API key
     localStorage.setItem('apiKey', apiKey);

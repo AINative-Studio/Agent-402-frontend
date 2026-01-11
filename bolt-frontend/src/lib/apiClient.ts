@@ -26,9 +26,10 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<APIError>) => {
     if (error.response?.status === 401) {
-      // Clear auth on unauthorized
+      // Clear auth on unauthorized - ProtectedRoute will handle redirect
       localStorage.removeItem('apiKey');
-      window.location.href = '/login';
+      // Dispatch a custom event so AuthContext can update state
+      window.dispatchEvent(new CustomEvent('auth:logout'));
     }
 
     // Transform to consistent error format
