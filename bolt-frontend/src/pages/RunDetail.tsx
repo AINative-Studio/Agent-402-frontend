@@ -1,42 +1,22 @@
-import { useEffect, useState } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { Clock, CheckCircle, Key, Database, Shield, Activity } from 'lucide-react';
-import { getX402RequestsByRun, getAgentMemoryByRun, getComplianceEventsByRun } from '../lib/api';
-import type { X402Request, AgentMemory, ComplianceEvent } from '../lib/types';
+import { useRunById } from '../hooks/useRuns';
+import { useX402Requests } from '../hooks/useX402';
+import { useComplianceEvents } from '../hooks/useCompliance';
+import { useMemories } from '../hooks/useMemory';
+import { useProject } from '../hooks/useProject';
 
 export function RunDetail() {
   const { runId } = useParams<{ runId: string }>();
   const location = useLocation();
-  const [x402Requests, setX402Requests] = useState<X402Request[]>([]);
-  const [memory, setMemory] = useState<AgentMemory[]>([]);
-  const [compliance, setCompliance] = useState<ComplianceEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { currentProject } = useProject();
 
-  useEffect(() => {
-    if (runId) {
-      loadRunData();
-    }
-  }, [runId]);
+  const { data: run, isLoading: runLoading, error: runError } = useRunById(currentProject?.id, runId);
+  const { data: x402Requests = [], isLoading: x402Loading } = useX402Requests(currentProject?.id, runId);
+  const { data: memory = [], isLoading: memoryLoading } = useMemories(currentProject?.id, { runId });
+  const { data: compliance = [], isLoading: complianceLoading } = useComplianceEvents(currentProject?.id, runId);
 
-  const loadRunData = async () => {
-    if (!runId) return;
-
-    try {
-      setLoading(true);
-      const [x402Data, memoryData, complianceData] = await Promise.all([
-        getX402RequestsByRun(runId),
-        getAgentMemoryByRun(runId),
-        getComplianceEventsByRun(runId),
-      ]);
-      setX402Requests(x402Data);
-      setMemory(memoryData);
-      setCompliance(complianceData);
-    } catch (err) {
-      console.error('Failed to load run data:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = runLoading || x402Loading || memoryLoading || complianceLoading;
 
   const formatTime = (dateStr: string) => {
     return new Date(dateStr).toLocaleTimeString('en-US', {

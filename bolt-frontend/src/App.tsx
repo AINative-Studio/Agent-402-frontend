@@ -3,6 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProjectProvider } from './contexts/ProjectContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/layout/Layout';
 import { Overview } from './pages/Overview';
 import { RunsList } from './pages/RunsList';
@@ -24,7 +25,11 @@ function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Layout />}>
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }>
                 <Route index element={<Overview />} />
                 <Route path="runs" element={<RunsList />} />
                 <Route path="runs/:runId" element={<RunDetail />} />

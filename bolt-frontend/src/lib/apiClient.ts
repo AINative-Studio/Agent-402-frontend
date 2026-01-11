@@ -1,10 +1,9 @@
 import axios, { AxiosError } from 'axios';
 import type { APIError } from './types';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/v1/public';
+import config from './config';
 
 export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: config.apiBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
