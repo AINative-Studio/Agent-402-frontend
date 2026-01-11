@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../lib/apiClient';
-import type { Run } from '../lib/types';
+import type { Run, RunStats } from '../lib/types';
 
 // Query keys
 export const runKeys = {
@@ -32,5 +32,17 @@ export function useRunById(projectId: string | undefined, runId: string | undefi
       return data;
     },
     enabled: !!projectId && !!runId,
+  });
+}
+
+// Fetch project stats for Overview page
+export function useProjectStats(projectId: string | undefined) {
+  return useQuery({
+    queryKey: ['projectStats', projectId],
+    queryFn: async () => {
+      const { data } = await apiClient.get<RunStats>(`/${projectId}/stats`);
+      return data;
+    },
+    enabled: !!projectId,
   });
 }

@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
-import { useTableById, useTableRows, useInsertRows, useDeleteRows } from '../hooks/useTables';
+import { useTableById, useTableRows, useInsertRows, useDeleteRow } from '../hooks/useTables';
+import { useProject } from '../hooks/useProject';
 
 export function TableDetail() {
   const { tableId } = useParams<{ tableId: string }>();
-  const { data: table, isLoading: tableLoading } = useTableById(tableId);
-  const { data: rows, isLoading: rowsLoading, refetch } = useTableRows(tableId);
-  const insertMutation = useInsertRows(tableId);
-  const deleteMutation = useDeleteRows(tableId);
+  const { currentProject } = useProject();
+  const projectId = currentProject?.project_id;
+
+  const { data: table, isLoading: tableLoading } = useTableById(projectId, tableId);
+  const { data: rows, isLoading: rowsLoading, refetch } = useTableRows(projectId, tableId);
+  const insertMutation = useInsertRows(projectId, tableId);
+  const deleteMutation = useDeleteRow(projectId, tableId);
 
   const [showInsert, setShowInsert] = useState(false);
   const [newRowJson, setNewRowJson] = useState('{}');
@@ -33,9 +37,17 @@ export function TableDetail() {
 
   const handleDeleteRow = (rowId: string) => {
     if (confirm('Delete this row?')) {
-      deleteMutation.mutate({ row_id: rowId });
+      deleteMutation.mutate(rowId);
     }
   };
+
+  if (!currentProject) {
+    return (
+      <div className="p-6 text-gray-400 text-center">
+        Please select a project to view table details.
+      </div>
+    );
+  }
 
   if (tableLoading) {
     return (
