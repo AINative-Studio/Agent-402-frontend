@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #0B0F1A;
+    --surface: #111A2E;
+    --surface-2: #0F1628;
+    --border: rgba(255,255,255,0.08);
+
+    --text: rgba(255,255,255,0.92);
+    --muted: rgba(255,255,255,0.65);
+    --subtle: rgba(255,255,255,0.45);
+
+    --primary: #4F8CFF;
+    --success: #2FE39B;
+    --warning: #FFB020;
+    --danger: #FF4D5E;
+  }
+
+  body {
+    @apply bg-[var(--bg)] text-[var(--text)];
+    font-family: 'Inter', sans-serif;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
