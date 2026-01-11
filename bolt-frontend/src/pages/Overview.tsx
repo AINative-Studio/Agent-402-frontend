@@ -1,31 +1,31 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Activity, Key, Database, Shield, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
-import { getRunStats } from '../lib/api';
+import { useProjectStats } from '../hooks/useRuns';
+import { useProject } from '../hooks/useProject';
 import type { RunStats } from '../lib/types';
 
 export function Overview() {
-  const [stats, setStats] = useState<RunStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { currentProject } = useProject();
+  const { data: stats, isLoading, error, refetch } = useProjectStats(currentProject?.project_id);
 
-  useEffect(() => {
-    loadStats();
-  }, []);
+  // Handle no project selected
+  if (!currentProject) {
+    return (
+      <div className="p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center py-16">
+            <div className="w-16 h-16 bg-[var(--surface-2)] rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Activity className="w-8 h-8 text-[var(--muted)]" />
+            </div>
+            <h2 className="text-2xl font-semibold mb-2">No Project Selected</h2>
+            <p className="text-[var(--muted)] mb-6">Please select a project to view the overview</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const loadStats = async () => {
-    try {
-      setLoading(true);
-      const data = await getRunStats();
-      setStats(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load stats');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="p-8">
         <div className="max-w-6xl mx-auto">
@@ -51,9 +51,9 @@ export function Overview() {
               <AlertCircle className="w-5 h-5 text-[var(--danger)] mt-0.5" />
               <div>
                 <h3 className="font-semibold text-[var(--danger)] mb-1">Error Loading Data</h3>
-                <p className="text-sm text-[var(--muted)]">{error}</p>
+                <p className="text-sm text-[var(--muted)]">{error instanceof Error ? error.message : 'Failed to load stats'}</p>
                 <button
-                  onClick={loadStats}
+                  onClick={() => refetch()}
                   className="mt-4 px-4 py-2 bg-[var(--danger)] text-white rounded-lg text-sm font-medium hover:opacity-90"
                 >
                   Retry
@@ -91,19 +91,19 @@ export function Overview() {
     },
     {
       label: 'X402 Requests',
-      value: stats.total_x402_requests.toString(),
+      value: (stats.total_x402_requests || 0).toString(),
       icon: Key,
       color: 'primary',
     },
     {
       label: 'Memory Entries',
-      value: stats.total_memory_entries.toString(),
+      value: (stats.total_memory_entries || 0).toString(),
       icon: Database,
       color: 'warning',
     },
     {
       label: 'Compliance Events',
-      value: stats.total_compliance_events.toString(),
+      value: (stats.total_compliance_events || 0).toString(),
       icon: Shield,
       color: 'success',
     },
