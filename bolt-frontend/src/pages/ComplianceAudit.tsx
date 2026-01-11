@@ -1,33 +1,13 @@
-import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Shield, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
-import { getComplianceEventsByRun } from '../lib/api';
+import { useComplianceEvents } from '../hooks/useCompliance';
+import { useProject } from '../hooks/useProject';
 import type { ComplianceEvent } from '../lib/types';
 
 export function ComplianceAudit() {
   const { runId } = useParams<{ runId: string }>();
-  const [events, setEvents] = useState<ComplianceEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (runId) {
-      loadEvents();
-    }
-  }, [runId]);
-
-  const loadEvents = async () => {
-    if (!runId) return;
-
-    try {
-      setLoading(true);
-      const data = await getComplianceEventsByRun(runId);
-      setEvents(data);
-    } catch (err) {
-      console.error('Failed to load compliance events:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { currentProject } = useProject();
+  const { data: events = [], isLoading, error } = useComplianceEvents(currentProject?.project_id, runId);
 
   const getRiskLevel = (score: number) => {
     if (score < 30) return { label: 'LOW', color: 'success' };
@@ -35,7 +15,7 @@ export function ComplianceAudit() {
     return { label: 'HIGH', color: 'danger' };
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="p-8">
         <div className="max-w-6xl mx-auto">
@@ -43,6 +23,20 @@ export function ComplianceAudit() {
             {[...Array(2)].map((_, i) => (
               <div key={i} className="h-40 bg-[var(--surface)] rounded-2xl" />
             ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-12 text-center">
+            <XCircle className="w-12 h-12 text-[var(--danger)] mx-auto mb-4" />
+            <p className="text-[var(--danger)] mb-2">Failed to load compliance events</p>
+            <p className="text-sm text-[var(--muted)]">{error instanceof Error ? error.message : 'An error occurred'}</p>
           </div>
         </div>
       </div>
@@ -68,7 +62,7 @@ export function ComplianceAudit() {
               const riskLevel = getRiskLevel(event.risk_score);
               return (
                 <div
-                  key={event.id}
+                  key={event.event_id || event.id}
                   className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6"
                 >
                   <div className="flex items-start gap-4 mb-4">
@@ -115,12 +109,12 @@ export function ComplianceAudit() {
                         <div>
                           <div className="text-xs text-[var(--muted)] mb-1">Reason Codes</div>
                           <div className="text-sm">
-                            {event.reason_codes.length} checks
+                            {event.reason_codes?.length || 0} checks
                           </div>
                         </div>
                       </div>
 
-                      {event.reason_codes.length > 0 && (
+                      {event.reason_codes && event.reason_codes.length > 0 && (
                         <div className="mb-4">
                           <div className="text-xs text-[var(--muted)] mb-2">Checks Performed</div>
                           <div className="flex flex-wrap gap-2">

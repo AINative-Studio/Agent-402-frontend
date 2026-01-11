@@ -15,7 +15,7 @@ export function useComplianceEvents(projectId?: string, runId?: string) {
     queryKey: complianceKeys.list(projectId!, runId),
     queryFn: async () => {
       const params = runId ? { run_id: runId } : {};
-      const { data } = await apiClient.get<ComplianceEvent[]>(`/${projectId}/compliance`, { params });
+      const { data } = await apiClient.get<ComplianceEvent[]>(`/${projectId}/compliance-events`, { params });
       return Array.isArray(data) ? data : data.items || [];
     },
     enabled: !!projectId,
@@ -26,7 +26,7 @@ export function useComplianceEventById(projectId?: string, eventId?: string) {
   return useQuery({
     queryKey: complianceKeys.detail(projectId!, eventId!),
     queryFn: async () => {
-      const { data } = await apiClient.get<ComplianceEvent>(`/${projectId}/compliance/${eventId}`);
+      const { data } = await apiClient.get<ComplianceEvent>(`/${projectId}/compliance-events/${eventId}`);
       return data;
     },
     enabled: !!projectId && !!eventId,
