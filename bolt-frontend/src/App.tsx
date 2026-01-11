@@ -11,6 +11,8 @@ import { X402Inspector } from './pages/X402Inspector';
 import { MemoryViewer } from './pages/MemoryViewer';
 import { ComplianceAudit } from './pages/ComplianceAudit';
 import { Embeddings } from './pages/Embeddings';
+import { Tables } from './pages/Tables';
+import { TableDetail } from './pages/TableDetail';
 import { Login } from './pages/Login';
 
 function App() {
@@ -29,6 +31,8 @@ function App() {
                 <Route path="runs/:runId/memory" element={<MemoryViewer />} />
                 <Route path="runs/:runId/audit" element={<ComplianceAudit />} />
                 <Route path="embeddings" element={<Embeddings />} />
+                <Route path="tables" element={<Tables />} />
+                <Route path="tables/:tableId" element={<TableDetail />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
             </Routes>
