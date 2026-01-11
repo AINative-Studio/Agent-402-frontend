@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { Project } from '../lib/types';
+import { apiClient } from '../lib/apiClient';
 
 interface ProjectContextType {
   currentProject: Project | null;
@@ -16,24 +17,51 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Restore selected project from localStorage on mount
+  // Fetch projects on mount
   useEffect(() => {
-    const savedProjectId = localStorage.getItem('selectedProjectId');
-    if (savedProjectId && projects.length > 0) {
-      const project = projects.find(p => p.project_id === savedProjectId);
-      if (project) {
-        setCurrentProject(project);
+    const fetchProjects = async () => {
+      try {
+        const response = await apiClient.get('/projects');
+        const projectsList: Project[] = response.data.items || response.data || [];
+        setProjects(projectsList);
+
+        // Try to restore saved project
+        const savedProjectId = localStorage.getItem('selectedProjectId');
+        if (savedProjectId && projectsList.length > 0) {
+          const savedProject = projectsList.find(p => p.project_id === savedProjectId);
+          if (savedProject) {
+            setCurrentProject(savedProject);
+            localStorage.setItem('projectId', savedProject.project_id);
+          } else {
+            // Saved project not found, use first available
+            setCurrentProject(projectsList[0]);
+            localStorage.setItem('projectId', projectsList[0].project_id);
+            localStorage.setItem('selectedProjectId', projectsList[0].project_id);
+          }
+        } else if (projectsList.length > 0) {
+          // No saved project, use first available
+          setCurrentProject(projectsList[0]);
+          localStorage.setItem('projectId', projectsList[0].project_id);
+          localStorage.setItem('selectedProjectId', projectsList[0].project_id);
+        }
+      } catch (error) {
+        console.error('Failed to fetch projects:', error);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
-  }, [projects]);
+    };
+
+    fetchProjects();
+  }, []);
 
   // Save selected project to localStorage when it changes
   useEffect(() => {
     if (currentProject) {
       localStorage.setItem('selectedProjectId', currentProject.project_id);
+      localStorage.setItem('projectId', currentProject.project_id);
     } else {
       localStorage.removeItem('selectedProjectId');
+      localStorage.removeItem('projectId');
     }
   }, [currentProject]);
 

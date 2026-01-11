@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, PlayCircle, Database, Shield, Activity } from 'lucide-react';
+import { ProjectSelector } from '../ProjectSelector';
 
 export function Sidebar() {
   const location = useLocation();
@@ -26,6 +27,10 @@ export function Sidebar() {
             <p className="text-xs text-[var(--muted)]">Fintech Demo</p>
           </div>
         </div>
+      </div>
+
+      <div className="p-4 border-b border-[var(--border)]">
+        <ProjectSelector />
       </div>
 
       <nav className="flex-1 p-4">
