@@ -56,13 +56,15 @@ export function useCreateTable(projectId?: string) {
   });
 }
 
-// Delete table
+// Delete table with confirmation
 export function useDeleteTable(projectId?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (tableId: string) => {
-      await apiClient.delete(`/${projectId}/tables/${tableId}`);
+    mutationFn: async ({ tableId, confirm = true }: { tableId: string; confirm?: boolean }) => {
+      await apiClient.delete(`/${projectId}/tables/${tableId}`, {
+        params: { confirm },
+      });
       return tableId;
     },
     onSuccess: () => {
@@ -73,7 +75,7 @@ export function useDeleteTable(projectId?: string) {
   });
 }
 
-// List rows
+// List rows with pagination support
 export function useTableRows(projectId?: string, tableId?: string, params?: {
   limit?: number;
   offset?: number;
@@ -92,6 +94,31 @@ export function useTableRows(projectId?: string, tableId?: string, params?: {
     },
     enabled: !!projectId && !!tableId,
   });
+}
+
+// Query rows with full response (for pagination)
+export function useQueryRows(projectId?: string, tableId?: string, params?: {
+  limit?: number;
+  offset?: number;
+  filter?: Record<string, unknown>;
+  sort?: Record<string, unknown>;
+}) {
+  return useQuery({
+    queryKey: [...tableKeys.rows(projectId!, tableId!), params],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ rows: Row[]; total: number; limit: number; offset: number }>(
+        `/${projectId}/tables/${tableId}/rows`,
+        { params }
+      );
+      return data;
+    },
+    enabled: !!projectId && !!tableId,
+  });
+}
+
+// Alias for useTableById with better naming
+export function useGetTable(projectId?: string, tableId?: string) {
+  return useTableById(projectId, tableId);
 }
 
 // Get single row
@@ -118,10 +145,74 @@ export function useInsertRows(projectId?: string, tableId?: string) {
       );
       return data;
     },
+    onMutate: async () => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: tableKeys.rows(projectId!, tableId!) });
+    },
     onSuccess: () => {
       if (projectId && tableId) {
         queryClient.invalidateQueries({ queryKey: tableKeys.rows(projectId, tableId) });
         queryClient.invalidateQueries({ queryKey: tableKeys.detail(projectId, tableId) });
+      }
+    },
+    onError: (_error, _variables, _context) => {
+      // Rollback on error by invalidating queries
+      if (projectId && tableId) {
+        queryClient.invalidateQueries({ queryKey: tableKeys.rows(projectId, tableId) });
+      }
+    },
+  });
+}
+
+// Update single row
+export function useUpdateRow(projectId?: string, tableId?: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ rowId, rowData }: { rowId: string; rowData: Record<string, unknown> }) => {
+      const { data } = await apiClient.put<Row>(
+        `/${projectId}/tables/${tableId}/rows/${rowId}`,
+        { row_data: rowData }
+      );
+      return data;
+    },
+    onMutate: async ({ rowId, rowData }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: tableKeys.rows(projectId!, tableId!) });
+      await queryClient.cancelQueries({ queryKey: tableKeys.row(projectId!, tableId!, rowId) });
+
+      // Snapshot the previous value
+      const previousRows = queryClient.getQueryData(tableKeys.rows(projectId!, tableId!));
+      const previousRow = queryClient.getQueryData(tableKeys.row(projectId!, tableId!, rowId));
+
+      // Optimistically update the row cache
+      queryClient.setQueryData(tableKeys.row(projectId!, tableId!, rowId), (old: Row | undefined) => {
+        if (!old) return old;
+        return {
+          ...old,
+          row_data: rowData,
+          data: rowData,
+        };
+      });
+
+      // Return context with snapshot
+      return { previousRows, previousRow };
+    },
+    onSuccess: (data, variables) => {
+      if (projectId && tableId) {
+        // Invalidate the rows list
+        queryClient.invalidateQueries({ queryKey: tableKeys.rows(projectId, tableId) });
+        // Update the specific row cache with server response
+        queryClient.setQueryData(tableKeys.row(projectId, tableId, variables.rowId), data);
+      }
+    },
+    onError: (_error, variables, context) => {
+      // Rollback to previous value on error
+      if (context?.previousRow && projectId && tableId) {
+        queryClient.setQueryData(tableKeys.row(projectId, tableId, variables.rowId), context.previousRow);
+      }
+      if (projectId && tableId) {
+        queryClient.invalidateQueries({ queryKey: tableKeys.rows(projectId, tableId) });
       }
     },
   });
@@ -137,6 +228,61 @@ export function useDeleteRow(projectId?: string, tableId?: string) {
         `/${projectId}/tables/${tableId}/rows/${rowId}`
       );
       return data;
+    },
+    onMutate: async (rowId) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: tableKeys.rows(projectId!, tableId!) });
+
+      // Snapshot the previous value
+      const previousRows = queryClient.getQueryData(tableKeys.rows(projectId!, tableId!));
+
+      // Optimistically remove the row from cache
+      queryClient.setQueryData(
+        tableKeys.rows(projectId!, tableId!),
+        (old: Row[] | undefined) => {
+          if (!old) return old;
+          return old.filter((row) => row.row_id !== rowId);
+        }
+      );
+
+      return { previousRows };
+    },
+    onSuccess: () => {
+      if (projectId && tableId) {
+        queryClient.invalidateQueries({ queryKey: tableKeys.rows(projectId, tableId) });
+        queryClient.invalidateQueries({ queryKey: tableKeys.detail(projectId, tableId) });
+      }
+    },
+    onError: (_error, _variables, context) => {
+      // Rollback on error
+      if (context?.previousRows && projectId && tableId) {
+        queryClient.setQueryData(tableKeys.rows(projectId, tableId), context.previousRows);
+      }
+    },
+  });
+}
+
+// Delete multiple rows (bulk delete)
+export function useBulkDeleteRows(projectId?: string, tableId?: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (rowIds: string[]) => {
+      // Delete rows in parallel
+      const deletePromises = rowIds.map((rowId) =>
+        apiClient.delete(`/${projectId}/tables/${tableId}/rows/${rowId}`)
+      );
+      const results = await Promise.allSettled(deletePromises);
+
+      // Count successful deletions
+      const successCount = results.filter((result) => result.status === 'fulfilled').length;
+      const failedCount = results.filter((result) => result.status === 'rejected').length;
+
+      return {
+        success: successCount,
+        failed: failedCount,
+        total: rowIds.length,
+      };
     },
     onSuccess: () => {
       if (projectId && tableId) {

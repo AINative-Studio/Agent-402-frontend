@@ -1,47 +1,111 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Database, Brain, AlertCircle } from 'lucide-react';
-import { useMemories } from '../hooks/useMemory';
+import { useState, useMemo } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { Database, Brain, AlertCircle, ChevronLeft, ChevronRight, Filter, X, Search } from 'lucide-react';
+import { useMemories, useMemorySearch } from '../hooks/useMemory';
 import { useProject } from '../hooks/useProject';
+import { useAgents } from '../hooks/useAgents';
+import { useRuns } from '../hooks/useRuns';
+import { SemanticSearch } from '../components/SemanticSearch';
+import { appConfig } from '../config/app.config';
 import type { AgentMemory } from '../lib/types';
 
 type Memory = AgentMemory;
 
+const ITEMS_PER_PAGE = 20;
+
 export function MemoryViewer() {
   const { runId } = useParams<{ runId: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { currentProject } = useProject();
-  const [filter, setFilter] = useState<string>('all');
 
-  const { data: memories = [], isLoading, error } = useMemories(
+  // View mode state
+  const [viewMode, setViewMode] = useState<'browse' | 'search'>('browse');
+
+  // Filters state
+  const [selectedAgentId, setSelectedAgentId] = useState<string>('');
+  const [selectedRunId, setSelectedRunId] = useState<string>(runId || '');
+  const [selectedRole, setSelectedRole] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+
+  // Semantic search
+  const searchMutation = useMemorySearch();
+
+  // Fetch supporting data for filters
+  const { data: agents = [] } = useAgents(currentProject?.project_id);
+  const { data: runs = [] } = useRuns(currentProject?.project_id);
+
+  // Build filters for API request
+  const filters = useMemo(() => {
+    const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+    return {
+      agentId: selectedAgentId || undefined,
+      runId: selectedRunId || undefined,
+      role: selectedRole || undefined,
+      limit: ITEMS_PER_PAGE,
+      offset,
+    };
+  }, [selectedAgentId, selectedRunId, selectedRole, currentPage]);
+
+  const { data: memoriesData, isLoading, error } = useMemories(
     currentProject?.project_id,
-    { runId }
+    filters
   );
 
-  const roles: string[] = ['all', ...Array.from(new Set(memories.map((m: Memory) => m.agent_role).filter(Boolean) as string[]))];
-  const filteredMemories = filter === 'all'
-    ? memories
-    : memories.filter((m: Memory) => m.agent_role === filter);
+  const memories = memoriesData?.items || [];
+  const totalMemories = memoriesData?.total || 0;
+  const totalPages = Math.ceil(totalMemories / ITEMS_PER_PAGE);
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'analyst':
-        return 'primary';
-      case 'compliance':
-        return 'success';
-      case 'transaction':
-        return 'warning';
-      default:
-        return 'muted';
-    }
+  // Extract unique roles from current results for quick filter
+  const availableRoles = useMemo(() => {
+    const roles = new Set(memories.map((m: Memory) => m.agent_role).filter(Boolean) as string[]);
+    return Array.from(roles).sort();
+  }, [memories]);
+
+  // Reset to page 1 when filters change
+  const handleFilterChange = (filterType: string, value: string) => {
+    setCurrentPage(1);
+    if (filterType === 'agent') setSelectedAgentId(value);
+    if (filterType === 'run') setSelectedRunId(value);
+    if (filterType === 'role') setSelectedRole(value);
   };
+
+  const clearFilters = () => {
+    setSelectedAgentId('');
+    setSelectedRunId('');
+    setSelectedRole('');
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters = selectedAgentId || selectedRunId || selectedRole;
+
+  // Handle semantic search
+  const handleSemanticSearch = (query: string, threshold: number) => {
+    if (!currentProject?.project_id) return;
+
+    searchMutation.mutate({
+      projectId: currentProject.project_id,
+      query,
+      namespace: 'agent-memory',
+      threshold,
+      limit: 20,
+    });
+  };
+
+  // Import config at top of file instead
+  // Using appConfig.helpers.getRoleColor
+
+  const NoProjectIcon = appConfig.emptyStates.noProject.icon;
+  const ErrorIcon = appConfig.emptyStates.error.icon;
+  const NoMemoryIcon = appConfig.emptyStates.noMemory.icon;
 
   if (!currentProject) {
     return (
       <div className="p-8">
         <div className="max-w-6xl mx-auto">
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-12 text-center">
-            <AlertCircle className="w-12 h-12 text-[var(--muted)] mx-auto mb-4" />
-            <p className="text-[var(--muted)]">No project selected</p>
+            <NoProjectIcon className="w-12 h-12 text-[var(--muted)] mx-auto mb-4" />
+            <p className="text-[var(--muted)]">{appConfig.emptyStates.noProject.message}</p>
           </div>
         </div>
       </div>
@@ -67,10 +131,10 @@ export function MemoryViewer() {
       <div className="p-8">
         <div className="max-w-6xl mx-auto">
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-12 text-center">
-            <AlertCircle className="w-12 h-12 text-[var(--danger)] mx-auto mb-4" />
-            <p className="text-[var(--danger)] mb-2">Failed to load memories</p>
+            <ErrorIcon className="w-12 h-12 text-[var(--danger)] mx-auto mb-4" />
+            <p className="text-[var(--danger)] mb-2">{appConfig.emptyStates.error.title}</p>
             <p className="text-[var(--muted)] text-sm">
-              {error instanceof Error ? error.message : 'An error occurred'}
+              {error instanceof Error ? error.message : appConfig.emptyStates.error.message}
             </p>
           </div>
         </div>
@@ -81,82 +145,314 @@ export function MemoryViewer() {
   return (
     <div className="p-8">
       <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold mb-2">Agent Memory</h2>
-            <p className="text-[var(--muted)]">Persistent memory entries across agent execution</p>
+            <p className="text-[var(--muted)]">
+              Persistent memory entries across agent execution
+              {totalMemories > 0 && viewMode === 'browse' && (
+                <span className="ml-2 text-sm">
+                  ({totalMemories} {totalMemories === 1 ? 'entry' : 'entries'})
+                </span>
+              )}
+            </p>
           </div>
 
           <div className="flex gap-2">
-            {roles.map((role: string) => (
+            {/* View Mode Switcher */}
+            <div className="flex gap-1 bg-[var(--surface)] border border-[var(--border)] rounded-xl p-1">
               <button
-                key={role}
-                onClick={() => setFilter(role)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  filter === role
+                onClick={() => setViewMode('browse')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                  viewMode === 'browse'
                     ? 'bg-[var(--primary)] text-white'
-                    : 'bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]'
+                    : 'text-[var(--muted)] hover:text-[var(--text)]'
                 }`}
               >
-                {role.charAt(0).toUpperCase() + role.slice(1)}
+                <Database className="w-4 h-4" />
+                Browse
               </button>
-            ))}
+              <button
+                onClick={() => setViewMode('search')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                  viewMode === 'search'
+                    ? 'bg-[var(--primary)] text-white'
+                    : 'text-[var(--muted)] hover:text-[var(--text)]'
+                }`}
+              >
+                <Search className="w-4 h-4" />
+                Search
+              </button>
+            </div>
+
+            {/* Filter button for browse mode */}
+            {viewMode === 'browse' && (
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  showFilters || hasActiveFilters
+                    ? 'bg-[var(--primary)] text-white'
+                    : 'bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--surface-2)]'
+                }`}
+              >
+                <Filter className="w-4 h-4" />
+                Filters
+                {hasActiveFilters && (
+                  <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">
+                    {[selectedAgentId, selectedRunId, selectedRole].filter(Boolean).length}
+                  </span>
+                )}
+              </button>
+            )}
           </div>
         </div>
 
-        {filteredMemories.length === 0 ? (
-          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-12 text-center">
-            <Database className="w-12 h-12 text-[var(--muted)] mx-auto mb-4" />
-            <p className="text-[var(--muted)]">No memory entries found</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {filteredMemories.map((memory: Memory) => {
-              const roleColor = getRoleColor(memory.agent_role || 'unknown');
-              return (
-                <div
-                  key={memory.memory_id || memory.id}
-                  className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6"
-                >
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-[var(--${roleColor})]/10`}>
-                      <Brain className={`w-6 h-6 text-[var(--${roleColor})]`} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold capitalize">
-                          {memory.agent_role ? `${memory.agent_role} Agent` : 'Agent'}
-                        </h3>
-                        {memory.confidence_score && (
-                          <span className="px-3 py-1 rounded-lg text-xs font-medium bg-[var(--success)]/10 text-[var(--success)]">
-                            {(memory.confidence_score * 100).toFixed(0)}% confidence
-                          </span>
-                        )}
-                      </div>
-                      {(memory.summary || memory.content) && (
-                        <p className="text-sm text-[var(--muted)] mb-3">
-                          {memory.summary || memory.content.substring(0, 200)}
-                        </p>
-                      )}
-                      <div className="text-xs text-[var(--subtle)]">
-                        {new Date(memory.created_at).toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
+        {/* Semantic Search View */}
+        {viewMode === 'search' && (
+          <SemanticSearch
+            onSearch={handleSemanticSearch}
+            isLoading={searchMutation.isPending}
+            results={searchMutation.data?.results || []}
+            error={searchMutation.error}
+            namespace="agent-memory"
+          />
+        )}
 
-                  <details className="bg-[var(--surface-2)] rounded-xl p-4">
-                    <summary className="text-sm font-medium cursor-pointer select-none">
-                      View Full Details
-                    </summary>
-                    <pre className="mt-3 text-xs font-mono text-[var(--muted)] overflow-auto">
-                      {JSON.stringify(memory.details || memory.metadata || memory, null, 2)}
-                    </pre>
-                  </details>
-                </div>
-              );
-            })}
+        {/* Filter Panel */}
+        {viewMode === 'browse' && showFilters && (
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Filter Memory Entries</h3>
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="flex items-center gap-2 text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                  Clear All
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Agent Filter */}
+              <div>
+                <label className="block text-sm font-medium text-[var(--muted)] mb-2">
+                  Agent
+                </label>
+                <select
+                  value={selectedAgentId}
+                  onChange={(e) => handleFilterChange('agent', e.target.value)}
+                  className="w-full px-4 py-2 bg-[var(--surface-2)] border border-[var(--border)] rounded-xl text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                >
+                  <option value="">All Agents</option>
+                  {agents.map((agent) => (
+                    <option key={agent.agent_id} value={agent.agent_id}>
+                      {agent.role} ({agent.did.substring(0, 20)}...)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Run Filter */}
+              <div>
+                <label className="block text-sm font-medium text-[var(--muted)] mb-2">
+                  Run
+                </label>
+                <select
+                  value={selectedRunId}
+                  onChange={(e) => handleFilterChange('run', e.target.value)}
+                  className="w-full px-4 py-2 bg-[var(--surface-2)] border border-[var(--border)] rounded-xl text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                >
+                  <option value="">All Runs</option>
+                  {runs.map((run) => (
+                    <option key={run.run_id} value={run.run_id}>
+                      Run {run.run_id.substring(0, 8)}... - {run.status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Role Filter */}
+              <div>
+                <label className="block text-sm font-medium text-[var(--muted)] mb-2">
+                  Role
+                </label>
+                <select
+                  value={selectedRole}
+                  onChange={(e) => handleFilterChange('role', e.target.value)}
+                  className="w-full px-4 py-2 bg-[var(--surface-2)] border border-[var(--border)] rounded-xl text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                >
+                  <option value="">All Roles</option>
+                  {availableRoles.map((role) => (
+                    <option key={role} value={role}>
+                      {role.charAt(0).toUpperCase() + role.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
         )}
+
+        {/* Memory List - Only show in browse mode */}
+        {viewMode === 'browse' && memories.length === 0 ? (
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-12 text-center">
+            <NoMemoryIcon className="w-12 h-12 text-[var(--muted)] mx-auto mb-4" />
+            <p className="text-[var(--muted)]">
+              {hasActiveFilters ? 'No memory entries match your filters' : appConfig.emptyStates.noMemory.message}
+            </p>
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="mt-4 text-sm text-[var(--primary)] hover:underline"
+              >
+                Clear filters to see all entries
+              </button>
+            )}
+          </div>
+        ) : viewMode === 'browse' && memories.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 gap-4">
+              {memories.map((memory: Memory) => {
+                const roleColor = appConfig.helpers.getRoleColor(memory.agent_role || 'unknown');
+                return (
+                  <div
+                    key={memory.memory_id || memory.id}
+                    className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 hover:border-[var(--primary)]/30 transition-colors"
+                  >
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-[var(--${roleColor})]/10`}>
+                        <Brain className={`w-6 h-6 text-[var(--${roleColor})]`} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2 flex-wrap">
+                          <h3 className="font-semibold capitalize">
+                            {memory.agent_role ? `${memory.agent_role} Agent` : 'Agent'}
+                          </h3>
+                          {memory.confidence_score && (
+                            <span className="px-3 py-1 rounded-lg text-xs font-medium bg-[var(--success)]/10 text-[var(--success)]">
+                              {(memory.confidence_score * 100).toFixed(0)}% confidence
+                            </span>
+                          )}
+                          {memory.namespace && (
+                            <span className="px-3 py-1 rounded-lg text-xs font-medium bg-[var(--surface-2)] text-[var(--muted)]">
+                              {memory.namespace}
+                            </span>
+                          )}
+                        </div>
+                        {(memory.summary || memory.content) && (
+                          <p className="text-sm text-[var(--muted)] mb-3 leading-relaxed">
+                            {memory.summary || memory.content.substring(0, 300)}
+                            {memory.content.length > 300 && '...'}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-4 text-xs text-[var(--subtle)]">
+                          <span>
+                            {new Date(memory.created_at).toLocaleString()}
+                          </span>
+                          {memory.agent_id && (
+                            <span className="font-mono">
+                              Agent: {memory.agent_id.substring(0, 8)}
+                            </span>
+                          )}
+                          {memory.run_id && (
+                            <span className="font-mono">
+                              Run: {memory.run_id.substring(0, 8)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Expandable details */}
+                    <details className="bg-[var(--surface-2)] rounded-xl p-4">
+                      <summary className="text-sm font-medium cursor-pointer select-none hover:text-[var(--primary)] transition-colors">
+                        View Full Context & Metadata
+                      </summary>
+                      <div className="mt-3 space-y-2">
+                        {memory.content && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-[var(--muted)] mb-1">Full Content:</h4>
+                            <p className="text-sm text-[var(--text)] whitespace-pre-wrap">{memory.content}</p>
+                          </div>
+                        )}
+                        {(memory.metadata || memory.details) && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-[var(--muted)] mb-1">Metadata:</h4>
+                            <pre className="text-xs font-mono text-[var(--muted)] overflow-auto max-h-64">
+                              {JSON.stringify(memory.metadata || memory.details, null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    </details>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4">
+                <div className="text-sm text-[var(--muted)]">
+                  Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to{' '}
+                  {Math.min(currentPage * ITEMS_PER_PAGE, totalMemories)} of {totalMemories} entries
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-[var(--surface-2)] text-[var(--text)] hover:bg-[var(--primary)] hover:text-white"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Previous
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {[...Array(Math.min(5, totalPages))].map((_, idx) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = idx + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = idx + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + idx;
+                      } else {
+                        pageNum = currentPage - 2 + idx;
+                      }
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`w-10 h-10 rounded-xl text-sm font-medium transition-all ${
+                            currentPage === pageNum
+                              ? 'bg-[var(--primary)] text-white'
+                              : 'bg-[var(--surface-2)] text-[var(--muted)] hover:bg-[var(--primary)]/20'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-[var(--surface-2)] text-[var(--text)] hover:bg-[var(--primary)] hover:text-white"
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        ) : null}
       </div>
     </div>
   );

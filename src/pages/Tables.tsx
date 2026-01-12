@@ -1,47 +1,61 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Table2, Plus, Trash2, Loader2, AlertCircle } from 'lucide-react';
+import { Table2, Plus, Trash2, Loader2, AlertCircle, Database, Calendar } from 'lucide-react';
 import { useTables, useCreateTable, useDeleteTable } from '../hooks/useTables';
+import { useProject } from '../hooks/useProject';
+import { CreateTableModal } from '../components/CreateTableModal';
+import { SkeletonListCard } from '../components/skeletons';
+import type { TableSchema } from '../lib/types';
 
 export function Tables() {
-  const { data: tables, isLoading, error } = useTables();
-  const createMutation = useCreateTable();
-  const deleteMutation = useDeleteTable();
+  const { currentProject } = useProject();
+  const projectId = currentProject?.project_id;
 
-  const [showCreate, setShowCreate] = useState(false);
-  const [newTableName, setNewTableName] = useState('');
-  const [newTableDesc, setNewTableDesc] = useState('');
+  const { data: tables, isLoading, error } = useTables(projectId);
+  const createMutation = useCreateTable(projectId);
+  const deleteMutation = useDeleteTable(projectId);
 
-  const handleCreate = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTableName.trim()) return;
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-    createMutation.mutate({
-      table_name: newTableName,
-      description: newTableDesc,
-      schema: {
-        fields: {},
-        indexes: [],
-      },
-    }, {
+  const handleCreateTable = (data: { table_name: string; description?: string; schema: TableSchema }) => {
+    createMutation.mutate(data, {
       onSuccess: () => {
-        setNewTableName('');
-        setNewTableDesc('');
-        setShowCreate(false);
+        setShowCreateModal(false);
       },
     });
   };
 
   const handleDelete = (tableId: string, tableName: string) => {
     if (confirm(`Delete table "${tableName}"? This cannot be undone.`)) {
-      deleteMutation.mutate(tableId);
+      deleteMutation.mutate({ tableId, confirm: true });
     }
   };
 
+  if (!currentProject) {
+    return (
+      <div className="p-6 text-gray-400 text-center">
+        Please select a project to view tables.
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
-      <div className="p-6 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Tables</h1>
+            <p className="text-gray-400 mt-1">Manage your NoSQL tables</p>
+          </div>
+          <button
+            disabled
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 opacity-50 text-white rounded-lg cursor-not-allowed"
+          >
+            <Plus className="w-4 h-4" />
+            Create Table
+          </button>
+        </div>
+        <SkeletonListCard items={3} />
       </div>
     );
   }
@@ -65,7 +79,7 @@ export function Tables() {
           <p className="text-gray-400 mt-1">Manage your NoSQL tables</p>
         </div>
         <button
-          onClick={() => setShowCreate(!showCreate)}
+          onClick={() => setShowCreateModal(true)}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
         >
           <Plus className="w-4 h-4" />
@@ -73,83 +87,119 @@ export function Tables() {
         </button>
       </div>
 
-      {showCreate && (
-        <form onSubmit={handleCreate} className="bg-gray-800 rounded-lg p-4 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Table Name</label>
-            <input
-              type="text"
-              value={newTableName}
-              onChange={(e) => setNewTableName(e.target.value)}
-              placeholder="my_table"
-              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Description (optional)</label>
-            <input
-              type="text"
-              value={newTableDesc}
-              onChange={(e) => setNewTableDesc(e.target.value)}
-              placeholder="Table description..."
-              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={createMutation.isPending || !newTableName.trim()}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white rounded-lg transition-colors"
-            >
-              {createMutation.isPending ? 'Creating...' : 'Create'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowCreate(false)}
-              className="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      )}
-
       {tables && tables.length > 0 ? (
         <div className="grid gap-4">
           {tables.map((table) => (
             <div
               key={table.table_id}
-              className="bg-gray-800 rounded-lg p-4 border border-gray-700 flex items-center justify-between"
+              className="bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors"
             >
               <Link
                 to={`/tables/${table.table_id}`}
-                className="flex items-center gap-3 hover:text-blue-400 transition-colors"
+                className="block p-5"
               >
-                <Table2 className="w-5 h-5 text-blue-400" />
-                <div>
-                  <div className="text-white font-medium">{table.name}</div>
-                  {table.description && (
-                    <div className="text-sm text-gray-400">{table.description}</div>
-                  )}
-                  <div className="text-xs text-gray-500">{table.row_count || 0} rows</div>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3 flex-1">
+                    <Table2 className="w-5 h-5 text-blue-400 mt-1 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-white font-semibold text-lg">{table.name}</h3>
+                      </div>
+
+                      {table.description && (
+                        <p className="text-sm text-gray-400 mb-3">{table.description}</p>
+                      )}
+
+                      <div className="flex flex-wrap items-center gap-4 text-sm">
+                        <div className="flex items-center gap-1.5 text-gray-400">
+                          <Database className="w-4 h-4" />
+                          <span className="font-medium text-blue-400">{table.row_count || 0}</span>
+                          <span>rows</span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-gray-400">
+                          <span className="text-gray-500">Fields:</span>
+                          <span className="font-medium text-gray-300">
+                            {Object.keys(table.schema?.fields || {}).length}
+                          </span>
+                        </div>
+
+                        {table.schema?.indexes && table.schema.indexes.length > 0 && (
+                          <div className="flex items-center gap-1.5 text-gray-400">
+                            <span className="text-gray-500">Indexes:</span>
+                            <span className="font-medium text-gray-300">
+                              {table.schema.indexes.length}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-1.5 text-gray-500 text-xs ml-auto">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>{new Date(table.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+
+                      {Object.keys(table.schema?.fields || {}).length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-gray-700">
+                          <div className="text-xs text-gray-500 mb-2">Schema Preview</div>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(table.schema.fields).slice(0, 5).map(([fieldName, fieldDef]) => (
+                              <span
+                                key={fieldName}
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-gray-700 rounded text-xs"
+                              >
+                                <span className="text-gray-300">{fieldName}</span>
+                                <span className="text-gray-500">:</span>
+                                <span className="text-blue-400">{fieldDef.type}</span>
+                                {fieldDef.required && (
+                                  <span className="text-red-400">*</span>
+                                )}
+                              </span>
+                            ))}
+                            {Object.keys(table.schema.fields).length > 5 && (
+                              <span className="inline-flex items-center px-2 py-1 text-xs text-gray-500">
+                                +{Object.keys(table.schema.fields).length - 5} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleDelete(table.table_id, table.name);
+                    }}
+                    className="p-2 text-gray-400 hover:text-red-400 transition-colors ml-4 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={deleteMutation.isPending}
+                  >
+                    {deleteMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
               </Link>
-              <button
-                onClick={() => handleDelete(table.table_id, table.name)}
-                className="p-2 text-gray-400 hover:text-red-400 transition-colors"
-                disabled={deleteMutation.isPending}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
             </div>
           ))}
         </div>
       ) : (
-        <div className="text-center text-gray-400 py-12">
+        <div className="text-center text-gray-400 py-12 bg-gray-800/50 rounded-lg border border-gray-700 border-dashed">
           <Table2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>No tables yet. Create your first table to get started.</p>
+          <p className="text-lg mb-2">No tables yet</p>
+          <p className="text-sm text-gray-500">Create your first table to get started</p>
         </div>
       )}
+
+      <CreateTableModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreateTable}
+        isLoading={createMutation.isPending}
+      />
     </div>
   );
 }
