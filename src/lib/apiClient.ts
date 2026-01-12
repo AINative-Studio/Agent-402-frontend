@@ -39,7 +39,13 @@ export const toastEmitter = new ToastEventEmitter();
 // Request interceptor - attach API key and initialize retry count
 apiClient.interceptors.request.use(
     (config: ExtendedAxiosRequestConfig) => {
-        const apiKey = localStorage.getItem('apiKey');
+        // Use API key from localStorage or fall back to demo key from env
+        let apiKey = localStorage.getItem('apiKey');
+        if (!apiKey && import.meta.env.VITE_DEMO_API_KEY) {
+            apiKey = import.meta.env.VITE_DEMO_API_KEY;
+            // Auto-set in localStorage for subsequent requests
+            localStorage.setItem('apiKey', apiKey);
+        }
         if (apiKey) {
             config.headers['X-API-Key'] = apiKey;
         }

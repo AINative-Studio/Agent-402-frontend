@@ -18,7 +18,7 @@ interface GenerateEmbeddingResponse {
 export function useGenerateEmbedding(projectId?: string) {
   return useMutation({
     mutationFn: async (input: GenerateEmbeddingInput) => {
-      const { data } = await apiClient.post<GenerateEmbeddingResponse>(`/v1/public/${projectId}/embeddings/generate`, {
+      const { data } = await apiClient.post<GenerateEmbeddingResponse>(`/${projectId}/embeddings/generate`, {
         text: input.text,
         model: input.model || 'BAAI/bge-small-en-v1.5',
       });
@@ -47,7 +47,7 @@ interface CompareEmbeddingsResponse {
 export function useCompareEmbeddings(projectId?: string) {
   return useMutation({
     mutationFn: async (input: CompareEmbeddingsInput) => {
-      const { data} = await apiClient.post<CompareEmbeddingsResponse>(`/v1/public/${projectId}/embeddings/compare`, {
+      const { data} = await apiClient.post<CompareEmbeddingsResponse>(`/${projectId}/embeddings/compare`, {
         text1: input.text1,
         text2: input.text2,
         model: input.model || 'BAAI/bge-small-en-v1.5',
@@ -74,7 +74,7 @@ interface EmbedAndStoreResponse {
 export function useEmbedAndStore(projectId?: string) {
   return useMutation({
     mutationFn: async (input: EmbedAndStoreInput) => {
-      const { data } = await apiClient.post<EmbedAndStoreResponse>(`/v1/public/${projectId}/embeddings/embed-and-store`, {
+      const { data } = await apiClient.post<EmbedAndStoreResponse>(`/${projectId}/embeddings/embed-and-store`, {
         texts: input.texts,
         namespace: input.namespace || 'default',
         metadata: input.metadata,
@@ -96,7 +96,7 @@ interface SemanticSearchInput {
 export function useSemanticSearch(projectId?: string) {
   return useMutation({
     mutationFn: async (input: SemanticSearchInput) => {
-      const { data } = await apiClient.post<SearchResponse>(`/v1/public/${projectId}/embeddings/search`, {
+      const { data } = await apiClient.post<SearchResponse>(`/${projectId}/embeddings/search`, {
         query_text: input.query_text,
         namespace: input.namespace || 'default',
         limit: input.limit || 10,

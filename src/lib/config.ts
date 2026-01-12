@@ -164,10 +164,10 @@ const createConfig = (): AppConfig => {
   // Validate API URL format
   validateApiUrl(apiBaseUrl);
 
-  const apiVersionPath = parseString(
-    import.meta.env.VITE_API_VERSION_PATH,
-    '/v1/public'
-  );
+  // Allow empty string for VITE_API_VERSION_PATH (when baseURL already includes /v1/public)
+  const apiVersionPath = import.meta.env.VITE_API_VERSION_PATH !== undefined
+    ? import.meta.env.VITE_API_VERSION_PATH
+    : '/v1/public';
 
   // Construct full API URL
   const fullApiUrl = `${apiBaseUrl}${apiVersionPath}`;

@@ -43,6 +43,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        buffer: 'buffer/',
       },
     },
 
@@ -50,6 +51,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     define: {
       __APP_VERSION__: JSON.stringify(env.VITE_APP_VERSION || '1.0.0'),
       __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+      global: 'globalThis',
     },
 
     // Optimize dependencies
@@ -57,7 +59,12 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       // Exclude lucide-react from pre-bundling for better tree-shaking
       exclude: ['lucide-react'],
       // Include commonly used dependencies
-      include: ['react', 'react-dom', 'react-router-dom'],
+      include: ['react', 'react-dom', 'react-router-dom', 'buffer'],
+      esbuildOptions: {
+        define: {
+          global: 'globalThis',
+        },
+      },
     },
 
     // Production build configuration

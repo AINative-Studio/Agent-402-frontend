@@ -28,6 +28,7 @@ export interface NavigationItem {
 export const navigationItems: NavigationItem[] = [
     { path: '/', label: 'Overview', icon: LayoutDashboard },
     { path: '/demos', label: 'Demo Dashboard', icon: Sparkles },
+    { path: '/aikit-showcase', label: 'AIKit Showcase', icon: Sparkles },
     { path: '/runs', label: 'Runs', icon: PlayCircle },
     { path: '/agents', label: 'Agents', icon: Bot },
     { path: '/embeddings', label: 'Embeddings', icon: Search },

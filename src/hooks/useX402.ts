@@ -31,7 +31,7 @@ export function useX402Requests(projectId?: string, filters?: X402RequestFilters
       if (filters?.limit !== undefined) params.limit = filters.limit;
       if (filters?.offset !== undefined) params.offset = filters.offset;
 
-      const { data } = await apiClient.get<X402RequestListResponse>(`/v1/public/${projectId}/x402-requests`, { params });
+      const { data } = await apiClient.get<X402RequestListResponse>(`/${projectId}/x402-requests`, { params });
       return data;
     },
     enabled: !!projectId,
@@ -42,7 +42,7 @@ export function useX402RequestById(projectId?: string, requestId?: string) {
   return useQuery({
     queryKey: x402Keys.detail(projectId!, requestId!),
     queryFn: async () => {
-      const { data } = await apiClient.get<X402RequestWithLinks>(`/v1/public/${projectId}/x402-requests/${requestId}`);
+      const { data } = await apiClient.get<X402RequestWithLinks>(`/${projectId}/x402-requests/${requestId}`);
       return data;
     },
     enabled: !!projectId && !!requestId,

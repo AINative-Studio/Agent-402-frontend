@@ -17,9 +17,11 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
+    "@ainative/ai-kit": "file:../ai-kit/packages/react",
     "@tanstack/react-query": "^5.62.11",
     "@types/elliptic": "^6.4.18",
     "axios": "^1.7.9",
+    "buffer": "^6.0.3",
     "elliptic": "^6.6.1",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",

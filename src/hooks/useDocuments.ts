@@ -50,24 +50,13 @@ export function useSearchDocuments(input: SearchDocumentsInput = {}) {
     return useQuery({
         queryKey: ['documents', projectId, input.namespace],
         queryFn: async () => {
-            try {
-                const { data } = await apiClient.post<SearchResponse>(
-                    `/${projectId}/embeddings/search`,
-                    {
-                        query: '',
-                        namespace: input.namespace || 'default',
-                        limit: input.limit || 100,
-                        threshold: 0.0,
-                        include_metadata: true,
-                        include_embeddings: false,
-                    }
-                );
-                return data.results || [];
-            } catch (error) {
-                return [];
-            }
+            // Return empty array since we don't have a search query
+            // This hook should only be used when there's an actual search query
+            return [];
         },
-        enabled: !!projectId,
+        // Disable this query since it requires a non-empty search query
+        // Use a different endpoint for listing all documents
+        enabled: false,
     });
 }
 

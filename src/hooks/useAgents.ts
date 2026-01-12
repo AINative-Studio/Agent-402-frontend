@@ -25,7 +25,7 @@ export function useAgents(projectId?: string) {
   return useQuery({
     queryKey: agentKeys.list(projectId!),
     queryFn: async () => {
-      const { data } = await apiClient.get<AgentListResponse>(`/v1/public/${projectId}/agents`);
+      const { data } = await apiClient.get<AgentListResponse>(`/${projectId}/agents`);
       return data.items || data.agents || data.data || [];
     },
     enabled: !!projectId,
@@ -36,7 +36,7 @@ export function useAgentById(projectId?: string, agentId?: string) {
   return useQuery({
     queryKey: agentKeys.detail(projectId!, agentId!),
     queryFn: async () => {
-      const { data } = await apiClient.get<AgentResponse>(`/v1/public/${projectId}/agents/${agentId}`);
+      const { data } = await apiClient.get<AgentResponse>(`/${projectId}/agents/${agentId}`);
       return data.agent || data.data || data;
     },
     enabled: !!projectId && !!agentId,
@@ -53,7 +53,7 @@ export function useCreateAgent(projectId?: string) {
         project_id: projectId!,
         scope: input.scope || 'PROJECT',
       };
-      const { data } = await apiClient.post<AgentResponse>(`/v1/public/${projectId}/agents`, payload);
+      const { data } = await apiClient.post<AgentResponse>(`/${projectId}/agents`, payload);
       return data.agent || data.data || data;
     },
     onSuccess: () => {
@@ -69,7 +69,7 @@ export function useUpdateAgent(projectId?: string) {
 
   return useMutation({
     mutationFn: async ({ agentId, updates }: { agentId: string; updates: UpdateAgentRequest }) => {
-      const { data } = await apiClient.patch<AgentResponse>(`/v1/public/${projectId}/agents/${agentId}`, updates);
+      const { data } = await apiClient.patch<AgentResponse>(`/${projectId}/agents/${agentId}`, updates);
       return data.agent || data.data || data;
     },
     onSuccess: (_data, variables) => {
@@ -88,7 +88,7 @@ export function useDeleteAgent(projectId?: string) {
 
   return useMutation({
     mutationFn: async (agentId: string) => {
-      await apiClient.delete(`/v1/public/${projectId}/agents/${agentId}`);
+      await apiClient.delete(`/${projectId}/agents/${agentId}`);
       return agentId;
     },
     onSuccess: () => {
