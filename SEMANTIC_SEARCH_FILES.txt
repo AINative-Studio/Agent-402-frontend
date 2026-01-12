@@ -1,0 +1,216 @@
+SEMANTIC SEARCH IMPLEMENTATION - FILE STRUCTURE
+==============================================
+
+📁 Agent-402-frontend/
+│
+├── 📄 ISSUE_17_SEMANTIC_SEARCH.md (This summary)
+├── 📄 SEMANTIC_SEARCH_IMPLEMENTATION.md (Full technical documentation)
+│
+├── 📁 src/
+│   ├── 📁 components/
+│   │   └── ✨ SemanticSearch.tsx (NEW)
+│   │       - Search input with natural language placeholder
+│   │       - Similarity threshold slider
+│   │       - Search history dropdown
+│   │       - Context highlighting function
+│   │       - Results display with scores
+│   │       - 13KB, ~330 lines
+│   │
+│   ├── 📁 hooks/
+│   │   └── 🔄 useMemory.ts (MODIFIED)
+│   │       - Added useMemorySearch() mutation
+│   │       - API: POST /{projectId}/embeddings/search
+│   │       - Returns SearchResponse with results
+│   │       - 3.8KB, +28 lines
+│   │
+│   └── 📁 pages/
+│       └── 🔄 MemoryViewer.tsx (MODIFIED)
+│           - Added view mode switcher (Browse | Search)
+│           - Integrated SemanticSearch component
+│           - handleSemanticSearch() function
+│           - Dual-mode rendering logic
+│           - +60 lines
+│
+└── 📁 e2e/
+    └── ✨ semantic-search.spec.ts (NEW)
+        - 10 comprehensive E2E tests
+        - Playwright test suite
+        - 13KB, ~400 lines
+
+COMPONENT HIERARCHY
+===================
+
+MemoryViewer (Page)
+├── Header
+│   ├── Title & Description
+│   └── View Mode Switcher
+│       ├── [Browse] Button
+│       └── [Search] Button ← NEW
+│
+├── Browse Mode (Existing)
+│   ├── Filter Panel
+│   ├── Memory List
+│   └── Pagination
+│
+└── Search Mode (NEW)
+    └── SemanticSearch Component ← NEW
+        ├── Search Input
+        │   ├── Text field
+        │   └── Clear button (X)
+        ├── Search History Dropdown
+        │   ├── Recent searches
+        │   └── Clear history button
+        ├── Similarity Threshold Slider
+        │   └── Percentage display
+        ├── Search Button
+        │   └── Loading spinner
+        └── Results Display
+            ├── Result count
+            ├── Processing time
+            └── Result cards
+                ├── Similarity badge
+                ├── Highlighted content
+                └── Metadata viewer
+
+DATA FLOW
+=========
+
+User Input
+    ↓
+SemanticSearch Component
+    ↓ (onSearch prop)
+handleSemanticSearch()
+    ↓
+useMemorySearch() mutation
+    ↓ (mutate function)
+API Request
+    POST /{projectId}/embeddings/search
+    {
+        query_text: "...",
+        namespace: "agent-memory",
+        threshold: 0.7,
+        limit: 20,
+        model: "BAAI/bge-small-en-v1.5"
+    }
+    ↓
+Backend Processing
+    - Generate embedding
+    - Search vector database
+    - Calculate similarity scores
+    ↓
+API Response
+    {
+        results: [...],
+        processing_time_ms: 234
+    }
+    ↓
+SemanticSearch Component
+    - Display results
+    - Highlight matches
+    - Show similarity scores
+    ↓
+User sees results
+
+KEY FEATURES
+============
+
+✅ Natural Language Search
+   - Plain English queries
+   - No syntax required
+   - Example: "compliance check"
+
+✅ Similarity Scoring
+   - 0-100% similarity
+   - Visual badges
+   - Color-coded (success green)
+
+✅ Context Highlighting
+   - Matching terms highlighted
+   - Yellow/orange mark tags
+   - Regex-based splitting
+
+✅ Search History
+   - Last 10 searches
+   - localStorage persistence
+   - Click to re-run
+
+✅ Adjustable Precision
+   - Slider: 50% to 100%
+   - Real-time percentage display
+   - Default: 70%
+
+✅ Accessibility
+   - WCAG 2.1 AA compliant
+   - Keyboard navigation
+   - ARIA labels
+   - Screen reader support
+
+✅ Error Handling
+   - API error messages
+   - Empty state guidance
+   - Loading states
+
+✅ Testing
+   - 10 E2E tests
+   - Playwright suite
+   - Full coverage
+
+FILE SIZES
+==========
+
+SemanticSearch.tsx:       13 KB
+useMemory.ts:            3.8 KB
+semantic-search.spec.ts:  13 KB
+Total new code:          ~30 KB
+
+DEPENDENCIES
+============
+
+Existing (no new dependencies):
+- @tanstack/react-query (mutations)
+- lucide-react (icons)
+- react-router-dom (navigation)
+- axios (API client)
+
+APIs Used:
+- localStorage (search history)
+- Fetch/Axios (API calls)
+- React hooks (state management)
+
+TESTING
+=======
+
+Run E2E Tests:
+    npx playwright test e2e/semantic-search.spec.ts
+
+Test Coverage:
+    1. Tab visibility
+    2. View switching
+    3. Input interaction
+    4. Threshold adjustment
+    5. Search execution
+    6. Clear input
+    7. Keyboard navigation
+    8. History persistence
+    9. Mode switching
+    10. Error detection
+
+DEPLOYMENT
+==========
+
+Build:
+    npm run build
+
+Type Check:
+    npm run typecheck
+
+Lint:
+    npm run lint
+
+Requirements:
+    - Backend /embeddings/search endpoint
+    - BAAI/bge-small-en-v1.5 model
+    - API key authentication
+    - CORS headers configured
+
+STATUS: ✅ READY FOR DEPLOYMENT
