@@ -26,7 +26,7 @@ export function VectorSearch() {
     includeEmbeddings: false,
   });
 
-  const searchMutation = useSemanticSearch();
+  const searchMutation = useSemanticSearch(currentProject?.id);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

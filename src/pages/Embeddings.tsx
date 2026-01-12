@@ -28,10 +28,10 @@ export function Embeddings() {
     const [embedText, setEmbedText] = useState('');
     const [embedNamespace, setEmbedNamespace] = useState('default');
 
-    const generateMutation = useGenerateEmbedding();
-    const compareMutation = useCompareEmbeddings();
-    const searchMutation = useSemanticSearch();
-    const embedMutation = useEmbedAndStore();
+    const generateMutation = useGenerateEmbedding(currentProject?.id);
+    const compareMutation = useCompareEmbeddings(currentProject?.id);
+    const searchMutation = useSemanticSearch(currentProject?.id);
+    const embedMutation = useEmbedAndStore(currentProject?.id);
 
     const handleGenerate = (e: React.FormEvent) => {
         e.preventDefault();
