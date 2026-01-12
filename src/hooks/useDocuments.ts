@@ -7,9 +7,9 @@ function getProjectId(): string {
 }
 
 interface UploadDocumentsInput {
-    texts: string[];
+    documents: string[];
     namespace?: string;
-    metadata?: Record<string, unknown>;
+    metadata?: Record<string, unknown>[];
     model?: string;
 }
 
@@ -20,7 +20,7 @@ export function useUploadDocuments() {
         mutationFn: async (input: UploadDocumentsInput) => {
             const projectId = getProjectId();
             const request: DocumentUploadRequest = {
-                texts: input.texts,
+                documents: input.documents,
                 namespace: input.namespace || 'default',
                 metadata: input.metadata,
                 model: input.model || 'BAAI/bge-small-en-v1.5',

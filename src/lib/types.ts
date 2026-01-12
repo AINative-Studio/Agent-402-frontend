@@ -413,26 +413,39 @@ export interface DeleteRowsResponse {
 
 // Document Upload Types (Epic 7)
 export interface DocumentUploadRequest {
-  texts: string[];
+  documents: string[];
   model?: string;
   namespace?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Array<Record<string, unknown>>;
   upsert?: boolean;
+  vector_ids?: string[];
+  include_details?: boolean;
 }
 
 export interface VectorResult {
   vector_id: string;
   document: string;
+  metadata?: Record<string, unknown>;
+  created?: boolean;
+}
+
+export interface VectorDetail {
+  vector_id: string;
+  text_preview: string;
+  status: 'inserted' | 'updated';
 }
 
 export interface DocumentUploadResponse {
   vector_ids: string[];
-  stored_count: number;
+  vectors_stored: number;
+  vectors_inserted: number;
+  vectors_updated: number;
   model: string;
   dimensions: number;
   namespace: string;
   results: VectorResult[];
   processing_time_ms: number;
+  details?: VectorDetail[];
 }
 
 export interface StoredDocument {

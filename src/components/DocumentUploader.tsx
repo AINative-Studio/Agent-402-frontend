@@ -110,11 +110,11 @@ export function DocumentUploader({
         ));
 
         try {
-            const texts = pendingFiles.map(f => f.content);
+            const documents = pendingFiles.map(f => f.content);
             const result = await uploadMutation.mutateAsync({
-                texts,
+                documents,
                 namespace,
-                metadata,
+                metadata: metadata ? pendingFiles.map(() => metadata) : undefined,
             });
 
             setFiles(prev => prev.map((file) => {
