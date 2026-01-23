@@ -47,6 +47,13 @@ interface ImportMetaEnv {
   readonly VITE_GA_TRACKING_ID?: string;
   readonly VITE_POSTHOG_KEY?: string;
 
+  // Wallet/Blockchain Configuration
+  readonly VITE_WALLETCONNECT_PROJECT_ID?: string;
+  readonly VITE_AGENT_REGISTRY_ADDRESS?: string;
+  readonly VITE_REPUTATION_REGISTRY_ADDRESS?: string;
+  readonly VITE_AGENT_TREASURY_ADDRESS?: string;
+  readonly VITE_USDC_ADDRESS?: string;
+
   // Advanced Configuration
   readonly VITE_BASE_PATH: string;
   readonly VITE_PUBLIC_ASSETS_URL?: string;

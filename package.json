@@ -18,7 +18,8 @@
   },
   "dependencies": {
     "@ainative/ai-kit": "file:../ai-kit/packages/react",
-    "@tanstack/react-query": "^5.62.11",
+    "@rainbow-me/rainbowkit": "^2.2.10",
+    "@tanstack/react-query": "^5.90.20",
     "@types/elliptic": "^6.4.18",
     "axios": "^1.7.9",
     "buffer": "^6.0.3",
@@ -26,7 +27,9 @@
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^7.12.0"
+    "react-router-dom": "^7.12.0",
+    "viem": "^2.44.4",
+    "wagmi": "^2.19.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

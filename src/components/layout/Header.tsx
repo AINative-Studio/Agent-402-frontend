@@ -1,6 +1,7 @@
 import { useLocation, Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { appConfig } from '../../config/app.config';
+import { WalletConnect } from '../WalletConnect';
 
 export function Header() {
     const location = useLocation();
@@ -15,7 +16,7 @@ export function Header() {
         const breadcrumbs = [{ label: appConfig.breadcrumbs.defaultLabel, path: '/' }];
 
         let currentPath = '';
-        paths.forEach((segment, index) => {
+        paths.forEach((segment, _index) => {
             currentPath += `/${segment}`;
 
             const routeConfig = appConfig.breadcrumbs.routes[segment];
@@ -35,7 +36,7 @@ export function Header() {
     const breadcrumbs = getBreadcrumbs();
 
     return (
-        <header className="h-16 bg-[var(--surface)] border-b border-[var(--border)] px-8 flex items-center">
+        <header className="h-16 bg-[var(--surface)] border-b border-[var(--border)] px-8 flex items-center justify-between">
             <nav className="flex items-center gap-2">
                 {breadcrumbs.map((crumb, index) => (
                     <div key={crumb.path} className="flex items-center gap-2">
@@ -53,6 +54,7 @@ export function Header() {
                     </div>
                 ))}
             </nav>
+            <WalletConnect />
         </header>
     );
 }

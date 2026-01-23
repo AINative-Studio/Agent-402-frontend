@@ -177,8 +177,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       // CSS code splitting
       cssCodeSplit: true,
 
-      // Target modern browsers for better optimization
-      target: isProd ? 'es2015' : 'esnext',
+      // Target modern browsers (es2020 required for BigInt support by wagmi/viem)
+      target: isProd ? 'es2020' : 'esnext',
 
       // Emit manifest for asset tracking
       manifest: isProd,
@@ -246,6 +246,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       minifyWhitespace: isProd,
       // Legal comments
       legalComments: 'none',
+      // Target ES2020 for BigInt support (wagmi/viem)
+      target: 'es2020',
     },
 
     // Performance optimizations
