@@ -13,7 +13,7 @@ export const arcTestnet = defineChain({
     nativeCurrency: {
         name: 'USDC',
         symbol: 'USDC',
-        decimals: 6,
+        decimals: 18,  // EVM native tokens always use 18 decimals internally
     },
     rpcUrls: {
         default: {
