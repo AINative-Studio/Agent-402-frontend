@@ -347,7 +347,7 @@ export function VectorSearch() {
         <div className="bg-red-900/20 border border-red-800 rounded-lg p-4">
           <h3 className="text-red-400 font-semibold mb-1">Search Error</h3>
           <p className="text-red-400 text-sm">
-            {(searchMutation.error as any)?.detail || searchMutation.error?.message || 'An error occurred while searching'}
+            {(searchMutation.error as Error & { detail?: string })?.detail || searchMutation.error?.message || 'An error occurred while searching'}
           </p>
         </div>
       )}

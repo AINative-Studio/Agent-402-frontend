@@ -56,12 +56,12 @@ export function WorkflowDiagram({
 
             // Check for errors in this agent's steps
             if (step.type === 'compliance') {
-                const complianceData = step.data as any;
+                const complianceData = step.data as { passed?: boolean };
                 if (complianceData.passed === false) {
                     node.status = 'error';
                 }
             } else if (step.type === 'tool_call') {
-                const toolData = step.data as any;
+                const toolData = step.data as { data?: { success?: boolean } };
                 if (toolData.data?.success === false) {
                     node.status = 'error';
                 }

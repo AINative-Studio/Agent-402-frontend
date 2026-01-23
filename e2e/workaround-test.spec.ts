@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
 const FRONTEND_URL = 'http://localhost:5173';
 const TEST_API_KEY = 'demo_key_user1_abc123';

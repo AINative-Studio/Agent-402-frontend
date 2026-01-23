@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test } from '@playwright/test';
 
 // Test configuration
 const FRONTEND_URL = 'http://localhost:5173';

@@ -116,7 +116,7 @@ export function SignatureDebugger() {
             const { privateKey: pk, publicKey: pubKey } = generateKeyPair();
             setPrivateKey(pk);
             setPublicKey(pubKey);
-        } catch (err) {
+        } catch {
             // Error handling is done in the hook
         }
     };

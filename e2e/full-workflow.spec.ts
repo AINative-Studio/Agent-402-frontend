@@ -162,8 +162,8 @@ test.describe('Full Workflow - Navigation', () => {
 
             // Breadcrumb should update
             const breadcrumb = page.locator('nav:has-text("Runs")');
-            const hasBreadcrumb = await breadcrumb.isVisible().catch(() => false);
             // Breadcrumbs may or may not be visible depending on implementation
+            await breadcrumb.isVisible().catch(() => false);
             expect(true).toBe(true);
         }
     });

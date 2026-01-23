@@ -29,7 +29,7 @@ export function RowDetail() {
         toast.success('Row deleted successfully');
         navigate(`/tables/${tableId}`);
       },
-      onError: (error: any) => {
+      onError: (error: Error & { response?: { data?: { detail?: string } } }) => {
         const errorMessage = error.response?.data?.detail || 'Failed to delete row';
         toast.error(errorMessage);
         setShowDeleteConfirm(false);
@@ -46,7 +46,7 @@ export function RowDetail() {
           toast.success('Row updated successfully');
           refetch();
         },
-        onError: (error: any) => {
+        onError: (error: Error & { response?: { data?: { detail?: string } } }) => {
           const errorMessage = error.response?.data?.detail || 'Failed to update row';
           toast.error(errorMessage);
         },

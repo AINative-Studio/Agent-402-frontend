@@ -1,8 +1,7 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, Page } from '@playwright/test';
 
 // Test configuration
 const FRONTEND_URL = 'http://localhost:5173';
-const BACKEND_URL = 'http://localhost:8000';
 const TEST_API_KEY = 'demo_key_user1_abc123';
 
 // Increase timeout for all tests
@@ -91,7 +90,7 @@ test.describe('Agent402 Frontend E2E Tests', () => {
     try {
       await apiKeyInput.waitFor({ state: 'visible', timeout: 10000 });
       console.log('[PASS] API Key input is visible');
-    } catch (e) {
+    } catch {
       console.log('[FAIL] API Key input not found');
       // Try to capture current state
       const bodyText = await page.textContent('body').catch(() => 'Unable to get body text');

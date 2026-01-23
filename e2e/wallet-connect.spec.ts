@@ -234,9 +234,9 @@ test.describe('Wallet Connection - RainbowKit Integration', () => {
         // When: Page loads
         // Then: RainbowKit should be initialized (check for data-rk attribute or injected styles)
         const rainbowKitStyles = page.locator('style[data-emotion]');
-        const hasStyles = await rainbowKitStyles.count() > 0;
-
         // RainbowKit injects styles - this confirms it's loaded
+        await rainbowKitStyles.count();
+
         // Even if on login page, the provider should be active
         expect(true).toBe(true); // RainbowKit loads in WalletProvider wrapper
     });

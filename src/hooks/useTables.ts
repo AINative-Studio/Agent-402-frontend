@@ -155,7 +155,7 @@ export function useInsertRows(projectId?: string, tableId?: string) {
         queryClient.invalidateQueries({ queryKey: tableKeys.detail(projectId, tableId) });
       }
     },
-    onError: (_error, _variables, _context) => {
+    onError: () => {
       // Rollback on error by invalidating queries
       if (projectId && tableId) {
         queryClient.invalidateQueries({ queryKey: tableKeys.rows(projectId, tableId) });

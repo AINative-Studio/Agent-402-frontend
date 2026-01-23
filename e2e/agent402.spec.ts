@@ -1,8 +1,7 @@
-import { test, expect, Page } from '@playwright/test';
+import { test } from '@playwright/test';
 
 // Test configuration
 const FRONTEND_URL = 'http://localhost:5173';
-const BACKEND_URL = 'http://localhost:8000';
 const TEST_API_KEY = 'demo_key_user1_abc123';
 
 // Increase timeout for all tests

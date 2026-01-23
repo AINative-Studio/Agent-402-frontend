@@ -93,12 +93,17 @@ export function StatsChart({
     emptyMessage = 'No data available',
 }: StatsChartProps) {
     // Custom tooltip component
-    const CustomTooltip = ({ active, payload, label }: any) => {
+    interface TooltipPayloadEntry {
+        name: string;
+        value: string | number;
+        color: string;
+    }
+    const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: TooltipPayloadEntry[]; label?: string }) => {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
                     <p className="text-sm font-medium text-foreground mb-1">{label}</p>
-                    {payload.map((entry: any, index: number) => (
+                    {payload.map((entry: TooltipPayloadEntry, index: number) => (
                         <p
                             key={`item-${index}`}
                             className="text-sm"

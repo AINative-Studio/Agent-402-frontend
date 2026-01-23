@@ -146,7 +146,7 @@ export function WorkflowStepNavigator({
 
       {/* Step Navigation */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {WORKFLOW_STEPS.map((step, _index) => {
+        {WORKFLOW_STEPS.map((step) => {
           const isActive = step.step === currentStep;
           const status = stepStatuses[step.step];
 
@@ -187,7 +187,7 @@ export function WorkflowStepNavigator({
 
       {/* Mobile Step Indicators */}
       <div className="md:hidden flex justify-center gap-2 mt-4">
-        {WORKFLOW_STEPS.map((step, _index) => (
+        {WORKFLOW_STEPS.map((step) => (
           <button
             key={step.step}
             onClick={() => onStepChange(step.step)}

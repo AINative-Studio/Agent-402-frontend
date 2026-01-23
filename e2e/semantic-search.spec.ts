@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 // Test configuration
 const FRONTEND_URL = 'http://localhost:5173';
@@ -373,7 +373,7 @@ test.describe('Semantic Search E2E Tests', () => {
         expect(relevantErrors.length).toBeLessThanOrEqual(5);
     });
 
-    test.afterEach(async ({ page }) => {
+    test.afterEach(async () => {
         // Log any errors that occurred
         if (consoleErrors.length > 0) {
             console.log('\nConsole Errors:');

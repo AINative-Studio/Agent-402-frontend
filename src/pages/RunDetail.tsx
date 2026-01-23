@@ -16,7 +16,7 @@ export function RunDetail() {
     const location = useLocation();
     const { currentProject } = useProject();
 
-    const { data: _run, isLoading: runLoading, error: runError } = useRunById(currentProject?.project_id, runId);
+    const { isLoading: runLoading, error: runError } = useRunById(currentProject?.project_id, runId);
     const { data: x402Response, isLoading: x402Loading } = useX402Requests(currentProject?.project_id, { run_id: runId });
     const { data: memoryResponse, isLoading: memoryLoading } = useMemories(currentProject?.project_id, { runId });
     const { data: compliance = [], isLoading: complianceLoading } = useComplianceEvents(currentProject?.project_id, runId);

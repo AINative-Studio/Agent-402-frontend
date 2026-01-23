@@ -15,6 +15,7 @@ import {
     Wallet,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import type { RunStats, AgentMemory, ComplianceEvent, X402Request } from '../lib/types';
 
 // Navigation Configuration
 export interface NavigationItem {
@@ -118,7 +119,7 @@ export interface KPICard {
     label: string;
     icon: LucideIcon;
     color: 'primary' | 'success' | 'warning' | 'danger';
-    getValue: (stats: any) => string;
+    getValue: (stats: RunStats) => string;
 }
 
 export const kpiCards: KPICard[] = [
@@ -154,12 +155,12 @@ export interface TimelineStep {
     description: string;
     status: 'pending' | 'active' | 'completed' | 'error';
     dataSelector: (data: {
-        memory: any[];
-        compliance: any[];
-        x402Requests: any[];
+        memory: AgentMemory[];
+        compliance: ComplianceEvent[];
+        x402Requests: X402Request[];
     }) => {
         time?: string;
-        data?: any;
+        data?: AgentMemory | ComplianceEvent | X402Request;
     };
 }
 
@@ -169,8 +170,8 @@ export const timelineSteps: TimelineStep[] = [
         description: 'Market evaluation and analysis',
         status: 'completed',
         dataSelector: ({ memory }) => ({
-            time: memory.find((m: any) => m.agent_role === 'analyst')?.created_at,
-            data: memory.find((m: any) => m.agent_role === 'analyst'),
+            time: memory.find((m) => m.agent_role === 'analyst')?.created_at,
+            data: memory.find((m) => m.agent_role === 'analyst'),
         }),
     },
     {
@@ -187,8 +188,8 @@ export const timelineSteps: TimelineStep[] = [
         description: 'Signed request generation',
         status: 'completed',
         dataSelector: ({ x402Requests }) => ({
-            time: x402Requests.find((r: any) => r.did?.includes('transaction'))?.created_at,
-            data: x402Requests.find((r: any) => r.did?.includes('transaction')),
+            time: x402Requests.find((r: X402Request) => r.did?.includes('transaction'))?.created_at,
+            data: x402Requests.find((r: X402Request) => r.did?.includes('transaction')),
         }),
     },
     {

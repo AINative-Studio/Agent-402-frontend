@@ -109,7 +109,7 @@ export function TableDetail() {
         toast.success('Row created successfully');
         refetch();
       },
-      onError: (error: any) => {
+      onError: (error: Error & { response?: { data?: { detail?: string } } }) => {
         const errorMessage = error.response?.data?.detail || 'Failed to create row';
         toast.error(errorMessage);
       },
@@ -128,7 +128,7 @@ export function TableDetail() {
           toast.success('Row updated successfully');
           refetch();
         },
-        onError: (error: any) => {
+        onError: (error: Error & { response?: { data?: { detail?: string } } }) => {
           const errorMessage = error.response?.data?.detail || 'Failed to update row';
           toast.error(errorMessage);
         },
@@ -145,7 +145,7 @@ export function TableDetail() {
         toast.success('Row deleted successfully');
         refetch();
       },
-      onError: (error: any) => {
+      onError: (error: Error & { response?: { data?: { detail?: string } } }) => {
         const errorMessage = error.response?.data?.detail || 'Failed to delete row';
         toast.error(errorMessage);
         setRowToDelete(null);
@@ -221,7 +221,7 @@ export function TableDetail() {
         }
         refetch();
       },
-      onError: (error: any) => {
+      onError: (error: Error & { response?: { data?: { detail?: string } } }) => {
         const errorMessage = error.response?.data?.detail || 'Failed to delete rows';
         toast.error(errorMessage);
         setShowBulkDeleteConfirm(false);
