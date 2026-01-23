@@ -42,11 +42,11 @@ apiClient.interceptors.request.use(
         // Use API key from localStorage or fall back to demo key from env
         let apiKey = localStorage.getItem('apiKey');
         if (!apiKey && import.meta.env.VITE_DEMO_API_KEY) {
-            apiKey = import.meta.env.VITE_DEMO_API_KEY;
+            apiKey = import.meta.env.VITE_DEMO_API_KEY as string;
             // Auto-set in localStorage for subsequent requests
             localStorage.setItem('apiKey', apiKey);
         }
-        if (apiKey) {
+        if (apiKey && apiKey !== null) {
             config.headers['X-API-Key'] = apiKey;
         }
 

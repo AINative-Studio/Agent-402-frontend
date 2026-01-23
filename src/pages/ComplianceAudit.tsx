@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { Shield, CheckCircle, XCircle, AlertTriangle, Filter, Download, Clock, TrendingUp } from 'lucide-react';
+import { Shield, CheckCircle, XCircle, Filter, Download, Clock, TrendingUp } from 'lucide-react';
 import { useComplianceEvents } from '../hooks/useCompliance';
 import { useProject } from '../hooks/useProject';
 import { appConfig } from '../config/app.config';

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
-import { Database, Brain, AlertCircle, ChevronLeft, ChevronRight, Filter, X, Search } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { Database, Brain, ChevronLeft, ChevronRight, Filter, X, Search } from 'lucide-react';
 import { useMemories, useMemorySearch } from '../hooks/useMemory';
 import { useProject } from '../hooks/useProject';
 import { useAgents } from '../hooks/useAgents';
@@ -15,7 +15,6 @@ const ITEMS_PER_PAGE = 20;
 
 export function MemoryViewer() {
   const { runId } = useParams<{ runId: string }>();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { currentProject } = useProject();
 
   // View mode state

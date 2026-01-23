@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-    Key,
     CheckCircle,
     XCircle,
     Copy,

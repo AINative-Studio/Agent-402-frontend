@@ -4,6 +4,7 @@ import { DocumentUploader } from '../components/DocumentUploader';
 import { useSearchDocuments, useDeleteDocument } from '../hooks/useDocuments';
 import { useProject } from '../hooks/useProject';
 import { SkeletonListCard } from '../components/skeletons';
+import type { SearchResult } from '../lib/types';
 
 export function Documents() {
     const { currentProject } = useProject();
@@ -12,7 +13,7 @@ export function Documents() {
     const [showFilters, setShowFilters] = useState(false);
     const [metadata, setMetadata] = useState<Record<string, string>>({});
 
-    const { data: documents, isLoading, refetch } = useSearchDocuments({ namespace });
+    const { data: documents = [] as SearchResult[], isLoading, refetch } = useSearchDocuments({ namespace });
     const deleteMutation = useDeleteDocument();
 
     const handleDelete = async (vectorId: string) => {
@@ -44,7 +45,7 @@ export function Documents() {
         });
     };
 
-    const filteredDocuments = documents?.filter(doc =>
+    const filteredDocuments = (documents as SearchResult[])?.filter((doc: SearchResult) =>
         searchQuery === '' ||
         doc.document.toLowerCase().includes(searchQuery.toLowerCase())
     ) || [];

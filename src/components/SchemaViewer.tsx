@@ -77,7 +77,7 @@ export function SchemaViewer({ schema }: SchemaViewerProps) {
           <div className="pt-3 border-t border-gray-600">
             <h4 className="text-sm font-medium text-gray-300 mb-3">Indexes</h4>
             <div className="space-y-2">
-              {indexes.map((index, i) => (
+              {indexes.map((index: string | string[] | { fields: string[]; unique?: boolean }, i: number) => (
                 <div
                   key={i}
                   className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg border border-gray-600"
@@ -87,11 +87,11 @@ export function SchemaViewer({ schema }: SchemaViewerProps) {
                       {Array.isArray(index)
                         ? index.join(', ')
                         : typeof index === 'object' && 'fields' in index
-                        ? index.fields.join(', ')
+                        ? (index as { fields: string[] }).fields.join(', ')
                         : String(index)}
                     </code>
                   </div>
-                  {typeof index === 'object' && 'unique' in index && index.unique && (
+                  {typeof index === 'object' && 'unique' in index && (index as { unique?: boolean }).unique && (
                     <span className="px-2 py-1 bg-indigo-500/20 text-indigo-300 text-xs rounded border border-indigo-500/30">
                       unique
                     </span>

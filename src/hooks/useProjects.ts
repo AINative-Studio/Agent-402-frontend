@@ -60,7 +60,7 @@ export function useUpdateProject() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: projectKeys.detail(data.project_id) });
+      queryClient.invalidateQueries({ queryKey: projectKeys.detail(data.project_id ?? data.id) });
     },
   });
 }
