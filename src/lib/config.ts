@@ -98,9 +98,8 @@ export interface AppConfig {
     retryDelay: number;
   };
 
-  // Authentication configuration
+  // Authentication configuration (uses AINative JWT tokens)
   auth: {
-    apiKey?: string;
     projectId?: string;
     storageKey: string;
     sessionExpiry: number;
@@ -198,11 +197,10 @@ const createConfig = (): AppConfig => {
     },
 
     auth: {
-      apiKey: import.meta.env.VITE_API_KEY,
       projectId: import.meta.env.VITE_PROJECT_ID,
       storageKey: parseString(
         import.meta.env.VITE_AUTH_STORAGE_KEY,
-        'agent402_auth_token'
+        'agent402_access_token'
       ),
       sessionExpiry: parseNumber(import.meta.env.VITE_SESSION_EXPIRY, 86400000),
     },

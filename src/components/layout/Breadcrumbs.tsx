@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Home } from 'lucide-react';
 import { appConfig } from '../../config/app.config';
@@ -83,35 +84,36 @@ export function Breadcrumbs() {
                     const isFirst = index === 0;
 
                     return (
-                        <BreadcrumbItem key={crumb.path}>
+                        <Fragment key={crumb.path}>
                             {index > 0 && <BreadcrumbSeparator />}
-
-                            {isLast ? (
-                                <BreadcrumbPage>
-                                    {isFirst ? (
-                                        <span className="flex items-center gap-1.5">
-                                            <Home className="h-3.5 w-3.5" />
-                                            {crumb.label}
-                                        </span>
-                                    ) : (
-                                        crumb.label
-                                    )}
-                                </BreadcrumbPage>
-                            ) : (
-                                <BreadcrumbLink asChild>
-                                    <Link to={crumb.path}>
+                            <BreadcrumbItem>
+                                {isLast ? (
+                                    <BreadcrumbPage>
                                         {isFirst ? (
                                             <span className="flex items-center gap-1.5">
                                                 <Home className="h-3.5 w-3.5" />
-                                                <span className="hidden sm:inline">{crumb.label}</span>
+                                                {crumb.label}
                                             </span>
                                         ) : (
                                             crumb.label
                                         )}
-                                    </Link>
-                                </BreadcrumbLink>
-                            )}
-                        </BreadcrumbItem>
+                                    </BreadcrumbPage>
+                                ) : (
+                                    <BreadcrumbLink asChild>
+                                        <Link to={crumb.path}>
+                                            {isFirst ? (
+                                                <span className="flex items-center gap-1.5">
+                                                    <Home className="h-3.5 w-3.5" />
+                                                    <span className="hidden sm:inline">{crumb.label}</span>
+                                                </span>
+                                            ) : (
+                                                crumb.label
+                                            )}
+                                        </Link>
+                                    </BreadcrumbLink>
+                                )}
+                            </BreadcrumbItem>
+                        </Fragment>
                     );
                 })}
             </BreadcrumbList>

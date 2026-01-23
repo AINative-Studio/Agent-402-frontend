@@ -13,8 +13,7 @@ interface ImportMetaEnv {
   readonly VITE_API_RETRY_ATTEMPTS: string;
   readonly VITE_API_RETRY_DELAY: string;
 
-  // Authentication Configuration
-  readonly VITE_API_KEY?: string;
+  // Authentication Configuration (uses AINative JWT tokens)
   readonly VITE_PROJECT_ID?: string;
   readonly VITE_AUTH_STORAGE_KEY: string;
   readonly VITE_SESSION_EXPIRY: string;

@@ -36,18 +36,13 @@ class ToastEventEmitter {
 
 export const toastEmitter = new ToastEventEmitter();
 
-// Request interceptor - attach API key and initialize retry count
+// Request interceptor - attach Bearer token and initialize retry count
 apiClient.interceptors.request.use(
     (config: ExtendedAxiosRequestConfig) => {
-        // Use API key from localStorage or fall back to demo key from env
-        let apiKey = localStorage.getItem('apiKey');
-        if (!apiKey && import.meta.env.VITE_DEMO_API_KEY) {
-            apiKey = import.meta.env.VITE_DEMO_API_KEY as string;
-            // Auto-set in localStorage for subsequent requests
-            localStorage.setItem('apiKey', apiKey);
-        }
-        if (apiKey && apiKey !== null) {
-            config.headers['X-API-Key'] = apiKey;
+        // Use JWT token from localStorage (new auth system)
+        const token = localStorage.getItem('agent402_access_token');
+        if (token) {
+            config.headers['Authorization'] = `Bearer ${token}`;
         }
 
         // Initialize retry count if not present
@@ -78,7 +73,8 @@ apiClient.interceptors.response.use(
 
         // Handle authentication errors
         if (error.response?.status === 401) {
-            localStorage.removeItem('apiKey');
+            localStorage.removeItem('agent402_access_token');
+            localStorage.removeItem('agent402_user');
             window.dispatchEvent(new CustomEvent('auth:logout'));
 
             if (!originalRequest?._skipErrorToast) {

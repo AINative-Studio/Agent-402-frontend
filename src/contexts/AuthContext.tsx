@@ -1,81 +1,157 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import {
+    login as authLogin,
+    logout as authLogout,
+    register as authRegister,
+    getCurrentUser,
+    getStoredToken,
+    getStoredUser,
+    clearAuthData,
+    type LoginRequest,
+    type RegisterRequest,
+    type UserInfo,
+    type TokenResponse,
+    AuthError,
+} from '../lib/authService';
 
 interface AuthState {
-  apiKey: string | null;
-  isAuthenticated: boolean;
-  user: { id: string } | null;
+    token: string | null;
+    isAuthenticated: boolean;
+    user: UserInfo | null;
+    isLoading: boolean;
 }
 
 interface AuthContextType extends AuthState {
-  login: (apiKey: string) => Promise<void>;
-  logout: () => void;
+    login: (credentials: LoginRequest) => Promise<void>;
+    register: (data: RegisterRequest) => Promise<void>;
+    logout: () => Promise<void>;
+    refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [authState, setAuthState] = useState<AuthState>({
-    apiKey: null,
-    isAuthenticated: false,
-    user: null,
-  });
-
-  // Restore auth from localStorage on mount
-  useEffect(() => {
-    const savedApiKey = localStorage.getItem('apiKey');
-    if (savedApiKey) {
-      setAuthState({
-        apiKey: savedApiKey,
-        isAuthenticated: true,
-        user: { id: 'user' }, // Will be updated after verify call
-      });
-    }
-  }, []);
-
-  // Listen for logout events from apiClient (on 401 responses)
-  useEffect(() => {
-    const handleLogout = () => {
-      setAuthState({
-        apiKey: null,
+    const [authState, setAuthState] = useState<AuthState>({
+        token: null,
         isAuthenticated: false,
         user: null,
-      });
-    };
-
-    window.addEventListener('auth:logout', handleLogout);
-    return () => window.removeEventListener('auth:logout', handleLogout);
-  }, []);
-
-  const login = async (apiKey: string) => {
-    // Store API key
-    localStorage.setItem('apiKey', apiKey);
-    setAuthState({
-      apiKey,
-      isAuthenticated: true,
-      user: { id: 'user' },
+        isLoading: true,
     });
-  };
 
-  const logout = () => {
-    localStorage.removeItem('apiKey');
-    setAuthState({
-      apiKey: null,
-      isAuthenticated: false,
-      user: null,
-    });
-  };
+    // Initialize auth state from localStorage
+    useEffect(() => {
+        const initAuth = async () => {
+            const storedToken = getStoredToken();
+            const storedUser = getStoredUser();
 
-  return (
-    <AuthContext.Provider value={{ ...authState, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+            if (storedToken && storedUser) {
+                // Validate token by fetching current user
+                try {
+                    const user = await getCurrentUser(storedToken);
+                    setAuthState({
+                        token: storedToken,
+                        isAuthenticated: true,
+                        user,
+                        isLoading: false,
+                    });
+                } catch (error) {
+                    // Token invalid or expired
+                    console.error('Session validation failed:', error);
+                    clearAuthData();
+                    setAuthState({
+                        token: null,
+                        isAuthenticated: false,
+                        user: null,
+                        isLoading: false,
+                    });
+                }
+            } else {
+                setAuthState(prev => ({ ...prev, isLoading: false }));
+            }
+        };
+
+        initAuth();
+    }, []);
+
+    // Listen for logout events from apiClient (on 401 responses)
+    useEffect(() => {
+        const handleLogout = () => {
+            clearAuthData();
+            setAuthState({
+                token: null,
+                isAuthenticated: false,
+                user: null,
+                isLoading: false,
+            });
+        };
+
+        window.addEventListener('auth:logout', handleLogout);
+        return () => window.removeEventListener('auth:logout', handleLogout);
+    }, []);
+
+    const login = useCallback(async (credentials: LoginRequest) => {
+        const { token, user } = await authLogin(credentials);
+        setAuthState({
+            token: token.access_token,
+            isAuthenticated: true,
+            user,
+            isLoading: false,
+        });
+    }, []);
+
+    const register = useCallback(async (data: RegisterRequest) => {
+        // Register the user
+        await authRegister(data);
+        // Auto-login after registration
+        await login({ email: data.email, password: data.password });
+    }, [login]);
+
+    const logout = useCallback(async () => {
+        await authLogout();
+        setAuthState({
+            token: null,
+            isAuthenticated: false,
+            user: null,
+            isLoading: false,
+        });
+    }, []);
+
+    const refreshUser = useCallback(async () => {
+        if (!authState.token) return;
+
+        try {
+            const user = await getCurrentUser(authState.token);
+            setAuthState(prev => ({ ...prev, user }));
+        } catch (error) {
+            if (error instanceof AuthError && error.status === 401) {
+                await logout();
+            }
+        }
+    }, [authState.token, logout]);
+
+    return (
+        <AuthContext.Provider
+            value={{
+                ...authState,
+                login,
+                register,
+                logout,
+                refreshUser,
+            }}
+        >
+            {children}
+        </AuthContext.Provider>
+    );
 }
 
 export function useAuthContext() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuthContext must be used within AuthProvider');
-  }
-  return context;
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuthContext must be used within AuthProvider');
+    }
+    return context;
 }
+
+// Re-export types for convenience
+export type { LoginRequest, RegisterRequest, UserInfo, TokenResponse };
+export { AuthError };
