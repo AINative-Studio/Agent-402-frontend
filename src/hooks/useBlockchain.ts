@@ -152,34 +152,43 @@ export function useTreasuryInfo(treasuryId: number | undefined) {
 }
 
 /**
- * useHireAgent - Hook for hiring an agent (write contract)
- * Note: This would require the actual hire function in the contract
- * For now, this is a placeholder that simulates the hire flow
+ * useHireAgent - Hook for hiring an agent with USDC payment
+ *
+ * Calls fundTreasury on the AgentTreasury contract to pay an agent.
+ * On Arc Testnet, USDC is the native currency, so we send value with the transaction.
  */
 export function useHireAgent() {
-    const { data: hash, isPending, error } = useWriteContract();
+    const { writeContract, data: hash, isPending, error, reset } = useWriteContract();
 
     const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
         hash,
     });
 
+    /**
+     * Hire an agent by funding their treasury
+     * @param agentTokenId - The agent's NFT token ID
+     * @param _taskDescription - Task description (stored off-chain, used for UX)
+     * @param amount - Amount in USDC (18 decimals for Arc native USDC)
+     */
     const hireAgent = async (
         agentTokenId: number,
-        taskDescription: string,
+        _taskDescription: string,
         amount: bigint
     ) => {
-        // In a real implementation, this would call the actual hire function
-        // For demo purposes, we'll log the intent
-        console.log('Hire agent:', { agentTokenId, taskDescription, amount });
+        // First, we need to get the treasury ID for this agent
+        // The treasury ID is typically equal to the agent token ID
+        // but we use the mapping from the contract
+        const treasuryId = BigInt(agentTokenId);
 
-        // Placeholder: In production, uncomment and use actual contract function
-        // writeContract({
-        //     address: contracts.agentTreasury.address,
-        //     abi: [...], // hire function ABI
-        //     functionName: 'hire',
-        //     args: [BigInt(agentTokenId), taskDescription],
-        //     value: amount,
-        // });
+        // Fund the agent's treasury with USDC
+        // On Arc Testnet, USDC is the native currency, so we use msg.value
+        writeContract({
+            address: contracts.agentTreasury.address,
+            abi: contracts.agentTreasury.abi,
+            functionName: 'fundTreasury',
+            args: [treasuryId, amount],
+            value: amount, // Native USDC on Arc
+        });
     };
 
     return {
@@ -189,35 +198,75 @@ export function useHireAgent() {
         isSuccess,
         error,
         txHash: hash,
+        reset,
     };
 }
 
 /**
+ * Feedback type enum matching the contract
+ * POSITIVE = 0, NEGATIVE = 1, NEUTRAL = 2, REPORT = 3
+ */
+export enum FeedbackType {
+    POSITIVE = 0,
+    NEGATIVE = 1,
+    NEUTRAL = 2,
+    REPORT = 3,
+}
+
+/**
  * useSubmitFeedback - Hook for submitting feedback to ReputationRegistry
- * Note: This would require the actual submitFeedback function in the contract
+ *
+ * Calls submitFeedback on the ReputationRegistry contract to rate an agent.
+ * Score range: -100 to +100 (stored as int8)
  */
 export function useSubmitFeedback() {
-    const { data: hash, isPending, error } = useWriteContract();
+    const { writeContract, data: hash, isPending, error, reset } = useWriteContract();
 
     const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
         hash,
     });
 
+    /**
+     * Submit feedback for an agent
+     * @param agentTokenId - The agent's NFT token ID
+     * @param rating - Rating value (1-5 stars, converted to score internally)
+     * @param comment - Feedback comment
+     * @param transactionHash - Optional transaction hash to link feedback to a payment
+     */
     const submitFeedback = async (
         agentTokenId: number,
         rating: number,
-        comment: string
+        comment: string,
+        transactionHash?: string
     ) => {
-        // In a real implementation, this would call the actual submitFeedback function
-        console.log('Submit feedback:', { agentTokenId, rating, comment });
+        // Convert 1-5 star rating to feedback type and score
+        // 1-2 stars = NEGATIVE, 3 = NEUTRAL, 4-5 = POSITIVE
+        let feedbackType: FeedbackType;
+        let score: number;
 
-        // Placeholder: In production, uncomment and use actual contract function
-        // writeContract({
-        //     address: contracts.reputationRegistry.address,
-        //     abi: [...], // submitFeedback function ABI
-        //     functionName: 'submitFeedback',
-        //     args: [BigInt(agentTokenId), rating, comment],
-        // });
+        if (rating <= 2) {
+            feedbackType = FeedbackType.NEGATIVE;
+            score = rating === 1 ? -100 : -50; // 1 star = -100, 2 stars = -50
+        } else if (rating === 3) {
+            feedbackType = FeedbackType.NEUTRAL;
+            score = 0;
+        } else {
+            feedbackType = FeedbackType.POSITIVE;
+            score = rating === 4 ? 50 : 100; // 4 stars = +50, 5 stars = +100
+        }
+
+        writeContract({
+            address: contracts.reputationRegistry.address,
+            abi: contracts.reputationRegistry.abi,
+            functionName: 'submitFeedback',
+            args: [
+                BigInt(agentTokenId),
+                feedbackType,
+                score,
+                comment,
+                transactionHash || '',
+            ],
+        });
     };
 
     return {
@@ -227,6 +276,7 @@ export function useSubmitFeedback() {
         isSuccess,
         error,
         txHash: hash,
+        reset,
     };
 }
 

@@ -1,163 +1,193 @@
-import { useState } from 'react';
-import { Bot, Wallet, Users, TrendingUp, DollarSign, Shield, AlertCircle } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useMemo } from 'react';
+import { Bot, Users, DollarSign, Shield, AlertTriangle, Calendar, Info, TrendingUp, ShieldCheck, ArrowLeftRight } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { AgentReputation } from '../components/AgentReputation';
-import { TreasuryBalance } from '../components/TreasuryBalance';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { HireAgentModal } from '../components/HireAgentModal';
 import { FeedbackForm } from '../components/FeedbackForm';
 import { useWallet, useAgentRegistry, useAgentTreasury, useReputationRegistry } from '../hooks/useWallet';
 import { cn } from '@/lib/utils';
 
 /**
- * Agent data for display (mock data for demo)
+ * Agent data for display (demo data matching design spec)
  */
 const DEMO_AGENTS = [
     {
-        tokenId: 1,
-        name: 'Analyst Agent',
+        tokenId: 0,
+        name: 'Financial Analyst',
         role: 'Market Analyst',
-        did: 'did:arc:0x1234567890abcdef1234567890abcdef12345678',
-        description: 'Specialized in market analysis, trend identification, and financial data processing.',
-        trustTier: 3,
+        did: 'did:key:z6MkhaXgB2DvotDkL5257f...',
+        description: 'Provides market analysis and investment insights',
+        trustTier: 0,
         hourlyRate: 35,
+        registeredAt: '1/22/2026',
+        gradient: 'from-blue-500 to-purple-600',
+        icon: TrendingUp,
+    },
+    {
+        tokenId: 1,
+        name: 'Compliance Officer',
+        role: 'Compliance',
+        did: 'did:key:z6Mkl9E8kZT3ybvrYqVqJQ...',
+        description: 'Ensures regulatory compliance and risk management',
+        trustTier: 0,
+        hourlyRate: 50,
+        registeredAt: '1/22/2026',
+        gradient: 'from-emerald-500 to-teal-600',
+        icon: ShieldCheck,
     },
     {
         tokenId: 2,
-        name: 'Compliance Agent',
-        role: 'Compliance Officer',
-        did: 'did:arc:0xabcdef1234567890abcdef1234567890abcdef12',
-        description: 'Ensures regulatory compliance, risk assessment, and audit trail generation.',
-        trustTier: 4,
-        hourlyRate: 50,
-    },
-    {
-        tokenId: 3,
         name: 'Transaction Agent',
         role: 'Transaction Processor',
-        did: 'did:arc:0x7890abcdef1234567890abcdef1234567890abcd',
-        description: 'Handles secure transaction execution, payment processing, and settlement.',
-        trustTier: 2,
+        did: 'did:key:z6MkxkQ3EbhjE4VPZqL6LS...',
+        description: 'Executes and monitors financial transactions',
+        trustTier: 0,
         hourlyRate: 25,
+        registeredAt: '1/22/2026',
+        gradient: 'from-purple-500 to-pink-600',
+        icon: ArrowLeftRight,
     },
 ];
 
 /**
- * Trust tier badge colors
+ * Trust tier labels and colors
  */
-const TRUST_TIER_VARIANTS: Record<number, 'secondary' | 'info' | 'success' | 'warning'> = {
-    0: 'secondary',
-    1: 'info',
-    2: 'success',
-    3: 'success',
-    4: 'warning',
+const TRUST_TIER_LABELS = ['Untrusted', 'Novice', 'Trusted', 'Verified', 'Expert'];
+
+const TRUST_TIER_COLORS: Record<number, string> = {
+    0: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
+    1: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+    2: 'bg-green-500/10 text-green-400 border-green-500/30',
+    3: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+    4: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
 };
 
-const TRUST_TIER_LABELS = ['Unverified', 'Novice', 'Trusted', 'Verified', 'Expert'];
-
 /**
- * Truncate DID for display
+ * Role filter options
  */
-function truncateDID(did: string): string {
-    if (did.length <= 24) return did;
-    return `${did.slice(0, 16)}...${did.slice(-8)}`;
-}
+const ROLE_OPTIONS = ['All Roles', 'Market Analyst', 'Compliance', 'Transaction Processor'];
 
 /**
- * Stats card component
+ * Trust tier filter options
+ */
+const TRUST_TIER_OPTIONS = ['All Tiers', 'Unverified', 'Novice', 'Trusted', 'Verified', 'Expert'];
+
+/**
+ * Stats card component for the hero section
  */
 function StatsCard({
-    title,
-    value,
     icon: Icon,
-    description,
-    isLoading,
+    value,
+    label,
 }: {
-    title: string;
-    value: string | number;
     icon: React.ElementType;
-    description?: string;
-    isLoading?: boolean;
+    value: string;
+    label: string;
 }) {
     return (
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{title}</CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                {isLoading ? (
-                    <Skeleton className="h-8 w-20" />
-                ) : (
+        <Card className="rounded-xl bg-card">
+            <CardContent className="flex items-center gap-4 p-6">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-6 h-6 text-primary" />
+                </div>
+                <div>
                     <div className="text-2xl font-bold">{value}</div>
-                )}
-                {description && (
-                    <p className="text-xs text-muted-foreground mt-1">{description}</p>
-                )}
+                    <div className="text-sm text-muted-foreground">{label}</div>
+                </div>
             </CardContent>
         </Card>
     );
 }
 
 /**
- * Agent dashboard card component
+ * Agent card component with gradient header
  */
-function DashboardAgentCard({
+function AgentCard({
     agent,
     onHire,
-    onFeedback,
+    onDetails,
 }: {
     agent: typeof DEMO_AGENTS[0];
     onHire: () => void;
-    onFeedback: () => void;
+    onDetails: () => void;
 }) {
     const { isConnected } = useWallet();
 
     return (
-        <Card className="flex flex-col">
-            <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Bot className="w-6 h-6 text-primary" />
-                        </div>
-                        <div>
-                            <CardTitle className="text-base">{agent.name}</CardTitle>
-                            <CardDescription className="text-xs font-mono">
-                                {truncateDID(agent.did)}
-                            </CardDescription>
-                        </div>
-                    </div>
-                    <Badge variant={TRUST_TIER_VARIANTS[agent.trustTier] || 'secondary'}>
-                        {TRUST_TIER_LABELS[agent.trustTier]}
+        <Card className="overflow-hidden rounded-xl">
+            {/* Gradient Header */}
+            <div className={cn(
+                'h-32 relative bg-gradient-to-br',
+                agent.gradient
+            )}>
+                {/* Agent # Badge */}
+                <div className="absolute top-3 left-3">
+                    <Badge className="bg-purple-600/80 text-white border-0 text-xs">
+                        Agent #{agent.tokenId}
                     </Badge>
                 </div>
-            </CardHeader>
 
-            <CardContent className="flex-1 space-y-4">
-                {/* Role Badge */}
-                <div className="flex items-center gap-2">
-                    <Badge variant="outline">{agent.role}</Badge>
-                    <span className="text-xs text-muted-foreground">
-                        ~${agent.hourlyRate}/hr
-                    </span>
+                {/* Active Badge */}
+                <div className="absolute top-3 right-3">
+                    <Badge className="bg-green-500 text-white border-0 text-xs">
+                        Active
+                    </Badge>
                 </div>
 
-                {/* Description */}
-                <p className="text-sm text-muted-foreground">
-                    {agent.description}
-                </p>
+                {/* Centered Agent Icon */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                        <agent.icon className="w-8 h-8 text-white" />
+                    </div>
+                </div>
+            </div>
 
-                {/* Reputation Display */}
-                <div className="pt-2 border-t border-border">
-                    <AgentReputation agentTokenId={agent.tokenId} compact />
+            {/* Content Section */}
+            <CardContent className="p-5 space-y-4">
+                {/* Name and Description */}
+                <div>
+                    <h3 className="font-bold text-lg">{agent.name}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        {agent.description}
+                    </p>
                 </div>
 
-                {/* Treasury Display */}
-                <div className="pt-2 border-t border-border">
-                    <TreasuryBalance agentTokenId={agent.tokenId} compact showHistory={false} />
+                {/* Treasury Balance */}
+                <div className="flex items-center justify-between py-2 border-y border-border">
+                    <span className="text-sm text-muted-foreground">Treasury Balance</span>
+                    <span className="font-mono font-medium">0.00 USDC</span>
+                </div>
+
+                {/* Trust Tier and Reviews */}
+                <div className="flex items-center gap-2 flex-wrap">
+                    <Badge className={cn(
+                        'border text-xs',
+                        TRUST_TIER_COLORS[agent.trustTier]
+                    )}>
+                        {TRUST_TIER_LABELS[agent.trustTier]}
+                    </Badge>
+                    <span className="text-sm font-medium">0/10</span>
+                    <span className="text-sm text-muted-foreground">(0 reviews)</span>
+                </div>
+
+                {/* DID */}
+                <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">DID:</span>
+                    <span className="font-mono text-xs truncate">{agent.did}</span>
+                </div>
+
+                {/* Registered Date */}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Calendar className="w-4 h-4" />
+                    <span>Registered: {agent.registeredAt}</span>
                 </div>
 
                 {/* Action Buttons */}
@@ -166,20 +196,16 @@ function DashboardAgentCard({
                         onClick={onHire}
                         disabled={!isConnected}
                         className="flex-1"
-                        size="sm"
                     >
-                        <DollarSign className="w-4 h-4" />
-                        Hire
+                        Hire Agent
                     </Button>
                     <Button
-                        onClick={onFeedback}
-                        disabled={!isConnected}
+                        onClick={onDetails}
                         variant="outline"
-                        className="flex-1"
-                        size="sm"
+                        className="px-4"
                     >
-                        <TrendingUp className="w-4 h-4" />
-                        Feedback
+                        <Info className="w-4 h-4" />
+                        <span className="ml-2">Details</span>
                     </Button>
                 </div>
             </CardContent>
@@ -191,28 +217,45 @@ function DashboardAgentCard({
  * Dashboard - Main agent dashboard page
  *
  * Features:
- * - Grid of 3 AgentCard components
- * - Each card shows: name, role, reputation, treasury
- * - Hire button triggers HireAgentModal
- * - Connected wallet required for actions
- * - Overall blockchain stats
+ * - Hero section with title and stats
+ * - Filter bar for role and trust tier
+ * - Grid of agent cards with gradient headers
+ * - Wallet connection integration
+ * - Hire agent modal
  */
 export function Dashboard() {
-    const { isConnected, displayAddress, usdcBalance } = useWallet();
-    const { totalAgents, isLoading: isAgentsLoading } = useAgentRegistry();
-    const { totalTreasuries, totalPayments, isLoading: isTreasuryLoading } = useAgentTreasury();
-    const { totalFeedbacks, isLoading: isReputationLoading } = useReputationRegistry();
+    const { isConnected } = useWallet();
+    const { totalAgents } = useAgentRegistry();
+    // Keep hooks for potential future use with live data
+    useAgentTreasury();
+    useReputationRegistry();
 
+    // Filter state
+    const [roleFilter, setRoleFilter] = useState('All Roles');
+    const [trustFilter, setTrustFilter] = useState('All Tiers');
+
+    // Modal state
     const [hireModalOpen, setHireModalOpen] = useState(false);
     const [selectedAgent, setSelectedAgent] = useState<typeof DEMO_AGENTS[0] | null>(null);
     const [feedbackAgent, setFeedbackAgent] = useState<typeof DEMO_AGENTS[0] | null>(null);
+
+    // Filter agents based on selected filters
+    const filteredAgents = useMemo(() => {
+        return DEMO_AGENTS.filter((agent) => {
+            const roleMatch = roleFilter === 'All Roles' || agent.role === roleFilter;
+            const trustMatch = trustFilter === 'All Tiers' ||
+                TRUST_TIER_LABELS[agent.trustTier] === trustFilter ||
+                (trustFilter === 'Unverified' && agent.trustTier === 0);
+            return roleMatch && trustMatch;
+        });
+    }, [roleFilter, trustFilter]);
 
     const handleHireClick = (agent: typeof DEMO_AGENTS[0]) => {
         setSelectedAgent(agent);
         setHireModalOpen(true);
     };
 
-    const handleFeedbackClick = (agent: typeof DEMO_AGENTS[0]) => {
+    const handleDetailsClick = (agent: typeof DEMO_AGENTS[0]) => {
         setFeedbackAgent(agent);
     };
 
@@ -226,116 +269,127 @@ export function Dashboard() {
     };
 
     return (
-        <div className="space-y-6">
-            {/* Page Header */}
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold">Agent Dashboard</h1>
-                    <p className="text-muted-foreground">
-                        View agent reputation, treasury balances, and hire agents for tasks.
-                    </p>
+        <div className="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            {/* Header Section */}
+            <div>
+                <h1 className="text-2xl font-bold">Agent Dashboard</h1>
+                <p className="text-muted-foreground">
+                    Arc Network Trustless Agent Marketplace
+                </p>
+            </div>
+
+            {/* Hero Section */}
+            <div className="text-center py-8">
+                <h2 className="text-4xl font-bold mb-4">Discover AI Agents</h2>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
+                    Hire trustless autonomous agents, view their reputation on-chain,
+                    and make secure payments with USDC.
+                </p>
+            </div>
+
+            {/* Stats Row */}
+            <div className="grid gap-4 md:grid-cols-3">
+                <StatsCard
+                    icon={Users}
+                    value={String(totalAgents || DEMO_AGENTS.length)}
+                    label="Active Agents"
+                />
+                <StatsCard
+                    icon={DollarSign}
+                    value="USDC"
+                    label="Native Currency"
+                />
+                <StatsCard
+                    icon={Shield}
+                    value="On-Chain"
+                    label="Reputation"
+                />
+            </div>
+
+            {/* Filter Bar */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between py-4 border-y border-border">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <div className="flex items-center gap-2">
+                        <label className="text-sm font-medium whitespace-nowrap">
+                            Filter by Role:
+                        </label>
+                        <Select value={roleFilter} onValueChange={setRoleFilter}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="All Roles" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {ROLE_OPTIONS.map((role) => (
+                                    <SelectItem key={role} value={role}>
+                                        {role}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <label className="text-sm font-medium whitespace-nowrap">
+                            Filter by Trust Tier:
+                        </label>
+                        <Select value={trustFilter} onValueChange={setTrustFilter}>
+                            <SelectTrigger className="w-[140px]">
+                                <SelectValue placeholder="All Tiers" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {TRUST_TIER_OPTIONS.map((tier) => (
+                                    <SelectItem key={tier} value={tier}>
+                                        {tier}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
 
-                {/* Connection Status */}
-                <Card className={cn(
-                    'p-4',
-                    isConnected ? 'border-green-500/30' : 'border-amber-500/30'
-                )}>
-                    <div className="flex items-center gap-3">
-                        <div className={cn(
-                            'w-10 h-10 rounded-full flex items-center justify-center',
-                            isConnected ? 'bg-green-500/10' : 'bg-amber-500/10'
-                        )}>
-                            <Wallet className={cn(
-                                'w-5 h-5',
-                                isConnected ? 'text-green-500' : 'text-amber-500'
-                            )} />
-                        </div>
-                        <div>
-                            {isConnected ? (
-                                <>
-                                    <div className="text-sm font-medium">{displayAddress}</div>
-                                    <div className="text-xs text-green-400">{usdcBalance}</div>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="text-sm font-medium">Not Connected</div>
-                                    <div className="text-xs text-muted-foreground">
-                                        Connect wallet to hire agents
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </Card>
+                <div className="text-sm text-muted-foreground">
+                    Showing {filteredAgents.length} of {DEMO_AGENTS.length} agents
+                </div>
             </div>
 
             {/* Wallet Not Connected Warning */}
             {!isConnected && (
-                <Card className="border-amber-500/30 bg-amber-500/5">
+                <Card className="border-amber-500/50 bg-amber-500/10">
                     <CardContent className="flex items-center gap-4 py-4">
-                        <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                        <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0" />
                         <div>
-                            <p className="text-sm font-medium">Wallet connection required</p>
-                            <p className="text-xs text-muted-foreground">
-                                Connect your wallet using the button in the header to hire agents and submit feedback.
+                            <p className="font-semibold">Connect Your Wallet</p>
+                            <p className="text-sm text-muted-foreground">
+                                Connect your wallet to hire agents and submit feedback
                             </p>
                         </div>
                     </CardContent>
                 </Card>
             )}
 
-            {/* Stats Overview */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <StatsCard
-                    title="Registered Agents"
-                    value={totalAgents}
-                    icon={Users}
-                    description="On Arc Testnet"
-                    isLoading={isAgentsLoading}
-                />
-                <StatsCard
-                    title="Active Treasuries"
-                    value={totalTreasuries}
-                    icon={Wallet}
-                    description="Agent wallets"
-                    isLoading={isTreasuryLoading}
-                />
-                <StatsCard
-                    title="Total Payments"
-                    value={totalPayments}
-                    icon={DollarSign}
-                    description="Processed transactions"
-                    isLoading={isTreasuryLoading}
-                />
-                <StatsCard
-                    title="Total Feedbacks"
-                    value={totalFeedbacks}
-                    icon={Shield}
-                    description="Reputation entries"
-                    isLoading={isReputationLoading}
-                />
-            </div>
-
             {/* Agents Grid */}
-            <div>
-                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Bot className="w-5 h-5" />
-                    Available Agents
-                </h2>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {DEMO_AGENTS.map((agent) => (
-                        <DashboardAgentCard
-                            key={agent.tokenId}
-                            agent={agent}
-                            onHire={() => handleHireClick(agent)}
-                            onFeedback={() => handleFeedbackClick(agent)}
-                        />
-                    ))}
-                </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {filteredAgents.map((agent) => (
+                    <AgentCard
+                        key={agent.tokenId}
+                        agent={agent}
+                        onHire={() => handleHireClick(agent)}
+                        onDetails={() => handleDetailsClick(agent)}
+                    />
+                ))}
             </div>
 
-            {/* Feedback Form (shown when agent selected) */}
+            {/* Empty State */}
+            {filteredAgents.length === 0 && (
+                <div className="text-center py-12">
+                    <Bot className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Agents Found</h3>
+                    <p className="text-muted-foreground">
+                        Try adjusting your filters to find available agents.
+                    </p>
+                </div>
+            )}
+
+            {/* Feedback Form (shown when agent selected for details) */}
             {feedbackAgent && (
                 <div className="max-w-md mx-auto">
                     <FeedbackForm

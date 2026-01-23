@@ -81,6 +81,7 @@ export const agentRegistryAbi = [
  * ReputationRegistry ABI - Event-based reputation system
  */
 export const reputationRegistryAbi = [
+    // Read functions
     {
         type: 'function',
         name: 'getAgentScore',
@@ -128,12 +129,39 @@ export const reputationRegistryAbi = [
         outputs: [{ name: '', type: 'uint256' }],
         stateMutability: 'view',
     },
+    // Write functions
+    {
+        type: 'function',
+        name: 'submitFeedback',
+        inputs: [
+            { name: 'agentTokenId', type: 'uint256' },
+            { name: 'feedbackType', type: 'uint8' },
+            { name: 'score', type: 'int8' },
+            { name: 'comment', type: 'string' },
+            { name: 'transactionHash', type: 'string' },
+        ],
+        outputs: [{ name: '', type: 'uint256' }],
+        stateMutability: 'nonpayable',
+    },
+    // Events
+    {
+        type: 'event',
+        name: 'FeedbackSubmitted',
+        inputs: [
+            { name: 'feedbackId', type: 'uint256', indexed: true },
+            { name: 'agentTokenId', type: 'uint256', indexed: true },
+            { name: 'submitter', type: 'address', indexed: true },
+            { name: 'feedbackType', type: 'uint8', indexed: false },
+            { name: 'score', type: 'int8', indexed: false },
+        ],
+    },
 ] as const satisfies Abi;
 
 /**
  * AgentTreasury ABI - Circle Wallet wrapper for USDC payments
  */
 export const agentTreasuryAbi = [
+    // Read functions
     {
         type: 'function',
         name: 'getTreasury',
@@ -179,6 +207,61 @@ export const agentTreasuryAbi = [
         inputs: [],
         outputs: [{ name: '', type: 'uint256' }],
         stateMutability: 'view',
+    },
+    // Write functions
+    {
+        type: 'function',
+        name: 'fundTreasury',
+        inputs: [
+            { name: 'treasuryId', type: 'uint256' },
+            { name: 'amount', type: 'uint256' },
+        ],
+        outputs: [],
+        stateMutability: 'payable',
+    },
+    {
+        type: 'function',
+        name: 'processPayment',
+        inputs: [
+            { name: 'fromTreasuryId', type: 'uint256' },
+            { name: 'toTreasuryId', type: 'uint256' },
+            { name: 'amount', type: 'uint256' },
+            { name: 'purpose', type: 'string' },
+            { name: 'x402ReceiptHash', type: 'string' },
+        ],
+        outputs: [{ name: '', type: 'uint256' }],
+        stateMutability: 'nonpayable',
+    },
+    {
+        type: 'function',
+        name: 'withdrawFromTreasury',
+        inputs: [
+            { name: 'treasuryId', type: 'uint256' },
+            { name: 'amount', type: 'uint256' },
+        ],
+        outputs: [],
+        stateMutability: 'nonpayable',
+    },
+    // Events
+    {
+        type: 'event',
+        name: 'TreasuryFunded',
+        inputs: [
+            { name: 'treasuryId', type: 'uint256', indexed: true },
+            { name: 'funder', type: 'address', indexed: true },
+            { name: 'amount', type: 'uint256', indexed: false },
+        ],
+    },
+    {
+        type: 'event',
+        name: 'PaymentProcessed',
+        inputs: [
+            { name: 'paymentId', type: 'uint256', indexed: true },
+            { name: 'fromTreasuryId', type: 'uint256', indexed: true },
+            { name: 'toTreasuryId', type: 'uint256', indexed: true },
+            { name: 'amount', type: 'uint256', indexed: false },
+            { name: 'purpose', type: 'string', indexed: false },
+        ],
     },
 ] as const satisfies Abi;
 

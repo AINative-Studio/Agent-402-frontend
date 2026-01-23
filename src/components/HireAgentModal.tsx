@@ -136,10 +136,14 @@ export function HireAgentModal({
         const price = data.customPrice || estimatedPrice;
 
         try {
+            // Convert to USDC units (18 decimals on Arc Testnet native USDC)
+            // price is in human-readable USDC (e.g., 10.50)
+            // We need to convert to wei-like units (e.g., 10.50 * 10^18)
+            const amountInWei = BigInt(Math.floor(price * 1e18));
             await hireAgent(
                 agent.tokenId,
                 data.taskDescription,
-                BigInt(Math.floor(price * 1e6)) // Convert to USDC units (6 decimals)
+                amountInWei
             );
             onSuccess?.();
         } catch (err) {
