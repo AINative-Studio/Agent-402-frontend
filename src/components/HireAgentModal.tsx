@@ -117,6 +117,13 @@ export function HireAgentModal({
         }
     }, [open, agent, form]);
 
+    // Call onSuccess when transaction is confirmed
+    useEffect(() => {
+        if (isSuccess) {
+            onSuccess?.();
+        }
+    }, [isSuccess, onSuccess]);
+
     // Calculate estimated price based on task
     const estimatedPrice = useMemo(() => {
         if (!agent) return 0;
