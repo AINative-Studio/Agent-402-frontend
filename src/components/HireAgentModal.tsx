@@ -174,8 +174,12 @@ export function HireAgentModal({
         onClose();
     };
 
+    // Debug logging for transaction states
+    console.log('HireAgentModal state:', { isPending, isConfirming, isSuccess, error: error?.message });
+
     // Success state
     if (isSuccess) {
+        console.log('Showing success screen!');
         return (
             <Dialog open={open} onOpenChange={handleClose}>
                 <DialogContent className="sm:max-w-md">
