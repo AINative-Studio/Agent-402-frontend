@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/apiClient';
-import type { DocumentUploadRequest, DocumentUploadResponse, SearchResponse } from '../lib/types';
+import type { DocumentUploadRequest, DocumentUploadResponse } from '../lib/types';
 
 function getProjectId(): string {
     return localStorage.getItem('projectId') || 'default';

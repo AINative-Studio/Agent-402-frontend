@@ -14,7 +14,8 @@ import {
     FileText,
     Wrench,
     Globe,
-    Sparkles
+    Sparkles,
+    Wallet,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -27,6 +28,7 @@ export interface NavigationItem {
 
 export const navigationItems: NavigationItem[] = [
     { path: '/', label: 'Overview', icon: LayoutDashboard },
+    { path: '/dashboard', label: 'Agent Dashboard', icon: Wallet },
     { path: '/demos', label: 'Demo Dashboard', icon: Sparkles },
     { path: '/aikit-showcase', label: 'AIKit Showcase', icon: Sparkles },
     { path: '/runs', label: 'Runs', icon: PlayCircle },
@@ -85,6 +87,9 @@ export interface BreadcrumbConfig {
 export const breadcrumbConfig: BreadcrumbConfig = {
     defaultLabel: 'Overview',
     routes: {
+        dashboard: {
+            label: 'Agent Dashboard',
+        },
         demos: {
             label: 'Demo Dashboard',
         },

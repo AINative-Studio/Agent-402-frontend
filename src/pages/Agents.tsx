@@ -109,12 +109,6 @@ export function Agents() {
     );
   }
 
-  const statusColors = {
-    active: 'bg-green-500',
-    inactive: 'bg-gray-500',
-    suspended: 'bg-red-500',
-  };
-
   const statusLabels = {
     active: 'Active',
     inactive: 'Inactive',

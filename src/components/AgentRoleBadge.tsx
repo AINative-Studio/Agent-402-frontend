@@ -1,40 +1,38 @@
-import { BarChart3, Shield, Zap, Circle } from 'lucide-react';
+import { BarChart3, Shield, Zap, Circle, type LucideIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface AgentRoleBadgeProps {
-  role: string;
+    role: string;
 }
 
-const roleConfig: Record<string, { color: string; bgColor: string; icon: typeof BarChart3 }> = {
-  'Financial Analyst': {
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-500/10 border-blue-500/30',
-    icon: BarChart3,
-  },
-  'Compliance Officer': {
-    color: 'text-green-400',
-    bgColor: 'bg-green-500/10 border-green-500/30',
-    icon: Shield,
-  },
-  'Transaction Executor': {
-    color: 'text-purple-400',
-    bgColor: 'bg-purple-500/10 border-purple-500/30',
-    icon: Zap,
-  },
+const roleConfig: Record<string, { variant: 'analyst' | 'compliance' | 'executor' | 'secondary'; icon: LucideIcon }> = {
+    'Financial Analyst': {
+        variant: 'analyst',
+        icon: BarChart3,
+    },
+    'Compliance Officer': {
+        variant: 'compliance',
+        icon: Shield,
+    },
+    'Transaction Executor': {
+        variant: 'executor',
+        icon: Zap,
+    },
 };
 
 export function AgentRoleBadge({ role }: AgentRoleBadgeProps) {
-  const config = roleConfig[role] || {
-    color: 'text-gray-400',
-    bgColor: 'bg-gray-500/10 border-gray-500/30',
-    icon: Circle,
-  };
+    const config = roleConfig[role] || {
+        variant: 'secondary' as const,
+        icon: Circle,
+    };
 
-  const Icon = config.icon;
+    const Icon = config.icon;
 
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium ${config.bgColor} ${config.color}`}>
-      <Icon className="w-3.5 h-3.5" />
-      {role}
-    </span>
-  );
+    return (
+        <Badge variant={config.variant} className={cn('gap-1.5')}>
+            <Icon className="h-3.5 w-3.5" />
+            {role}
+        </Badge>
+    );
 }

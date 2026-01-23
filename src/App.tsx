@@ -4,6 +4,7 @@ import { queryClient } from './lib/queryClient';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProjectProvider } from './contexts/ProjectContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { WalletProvider } from './providers/WalletProvider';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/layout/Layout';
@@ -24,6 +25,7 @@ import { Documents } from './pages/Documents';
 import { X402Discovery } from './pages/X402Discovery';
 import { SignatureDebugger } from './pages/SignatureDebugger';
 import { DemoDashboard } from './pages/DemoDashboard';
+import { Dashboard } from './pages/Dashboard';
 import { Login } from './pages/Login';
 
 function App() {
@@ -37,10 +39,11 @@ function App() {
         }
       }}
     >
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <ToastProvider>
-            <BrowserRouter>
+      <WalletProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <ToastProvider>
+              <BrowserRouter>
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/" element={
@@ -51,6 +54,7 @@ function App() {
                   </ProtectedRoute>
                 }>
                   <Route index element={<Overview />} />
+                  <Route path="dashboard" element={<Dashboard />} />
                   <Route path="runs" element={<RunsList />} />
                   <Route path="runs/:runId" element={<RunDetail />} />
                   <Route path="runs/:runId/tools" element={<ToolCalls />} />
@@ -70,10 +74,11 @@ function App() {
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Route>
               </Routes>
-            </BrowserRouter>
-          </ToastProvider>
-        </AuthProvider>
-      </QueryClientProvider>
+              </BrowserRouter>
+            </ToastProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </WalletProvider>
     </ErrorBoundary>
   );
 }

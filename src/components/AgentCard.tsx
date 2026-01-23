@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Bot, Edit2, Trash2, Eye, ChevronDown, ChevronUp } from 'lucide-react';
+import { Bot, Edit2, Trash2, Eye, ChevronDown, ChevronUp, Star } from 'lucide-react';
 import { AgentRoleBadge } from './AgentRoleBadge';
 import { AgentScopeBadge } from './AgentScopeBadge';
+import { AgentReputation } from './AgentReputation';
 import type { Agent } from '../lib/types';
 
 interface AgentCardProps {
@@ -9,6 +10,10 @@ interface AgentCardProps {
   onEdit?: (agent: Agent) => void;
   onDelete?: (agentId: string) => void;
   onViewDetails?: (agentId: string) => void;
+  /** Optional agent token ID for blockchain reputation display */
+  agentTokenId?: number;
+  /** Show blockchain reputation (requires agentTokenId) */
+  showReputation?: boolean;
 }
 
 function truncateDID(did: string): string {
@@ -23,7 +28,14 @@ function truncateDID(did: string): string {
   return `${did.slice(0, 20)}...${did.slice(-4)}`;
 }
 
-export function AgentCard({ agent, onEdit, onDelete, onViewDetails }: AgentCardProps) {
+export function AgentCard({
+  agent,
+  onEdit,
+  onDelete,
+  onViewDetails,
+  agentTokenId,
+  showReputation = false,
+}: AgentCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
 
@@ -36,7 +48,7 @@ export function AgentCard({ agent, onEdit, onDelete, onViewDetails }: AgentCardP
   const shouldTruncateDescription = agent.description && agent.description.length > 100;
   const displayDescription = isExpanded || !shouldTruncateDescription
     ? agent.description
-    : `${agent.description.slice(0, 100)}...`;
+    : `${(agent.description ?? '').slice(0, 100)}...`;
 
   return (
     <div
@@ -61,7 +73,7 @@ export function AgentCard({ agent, onEdit, onDelete, onViewDetails }: AgentCardP
         {/* Badges */}
         <div className="flex items-center gap-2 flex-wrap">
           <AgentRoleBadge role={agent.role} />
-          <AgentScopeBadge scope={agent.scope} />
+          {agent.scope && <AgentScopeBadge scope={agent.scope} />}
         </div>
 
         {/* DID with Tooltip */}
@@ -117,6 +129,17 @@ export function AgentCard({ agent, onEdit, onDelete, onViewDetails }: AgentCardP
             day: 'numeric',
           })}
         </div>
+
+        {/* Blockchain Reputation (optional) */}
+        {showReputation && agentTokenId !== undefined && (
+          <div className="pt-2 border-t border-gray-700" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-2">
+              <Star className="w-3 h-3 text-yellow-400" />
+              <span>On-chain Reputation</span>
+            </div>
+            <AgentReputation agentTokenId={agentTokenId} compact />
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 pt-2 border-t border-gray-700">

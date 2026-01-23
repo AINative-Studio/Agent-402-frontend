@@ -170,7 +170,7 @@ export function Tables() {
                   <button
                     onClick={(e) => {
                       e.preventDefault();
-                      handleDelete(table.table_id, table.name);
+                      handleDelete(table.table_id ?? table.id, table.name ?? table.table_name);
                     }}
                     className="p-2 text-gray-400 hover:text-red-400 transition-colors ml-4 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={deleteMutation.isPending}

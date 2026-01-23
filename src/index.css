@@ -5,64 +5,128 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --bg: #0B0F1A;
-    --surface: #111A2E;
-    --surface-2: #0F1628;
-    --border: rgba(255,255,255,0.08);
+    :root {
+        /* AIKit Design Tokens - Light Mode */
+        --background: 0 0% 100%;
+        --foreground: 222.2 84% 4.9%;
 
-    --text: rgba(255,255,255,0.92);
-    --muted: rgba(255,255,255,0.65);
-    --subtle: rgba(255,255,255,0.45);
+        --card: 0 0% 100%;
+        --card-foreground: 222.2 84% 4.9%;
 
-    --primary: #4F8CFF;
-    --success: #2FE39B;
-    --warning: #FFB020;
-    --danger: #FF4D5E;
-  }
+        --popover: 0 0% 100%;
+        --popover-foreground: 222.2 84% 4.9%;
 
-  body {
-    @apply bg-[var(--bg)] text-[var(--text)];
-    font-family: 'Inter', sans-serif;
-  }
+        --primary: 217 91% 60%;
+        --primary-foreground: 210 40% 98%;
 
-  .font-mono {
-    font-family: 'JetBrains Mono', monospace;
-  }
+        --secondary: 210 40% 96.1%;
+        --secondary-foreground: 222.2 47.4% 11.2%;
+
+        --muted: 210 40% 96.1%;
+        --muted-foreground: 215.4 16.3% 46.9%;
+
+        --accent: 210 40% 96.1%;
+        --accent-foreground: 222.2 47.4% 11.2%;
+
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 210 40% 98%;
+
+        --success: 142 76% 36%;
+        --success-foreground: 210 40% 98%;
+
+        --warning: 38 92% 50%;
+        --warning-foreground: 210 40% 98%;
+
+        --info: 199 89% 48%;
+        --info-foreground: 210 40% 98%;
+
+        --border: 214.3 31.8% 91.4%;
+        --input: 214.3 31.8% 91.4%;
+        --ring: 217 91% 60%;
+
+        --radius: 0.75rem;
+
+        /* Legacy variables for backward compatibility */
+        --bg: #ffffff;
+        --surface: #f8fafc;
+        --surface-2: #f1f5f9;
+        --text: rgba(0, 0, 0, 0.92);
+    }
+
+    .dark {
+        /* AIKit Design Tokens - Dark Mode */
+        --background: 224 71% 4%;
+        --foreground: 213 31% 91%;
+
+        --card: 224 71% 6%;
+        --card-foreground: 213 31% 91%;
+
+        --popover: 224 71% 6%;
+        --popover-foreground: 213 31% 91%;
+
+        --primary: 217 91% 60%;
+        --primary-foreground: 210 40% 98%;
+
+        --secondary: 215 27.9% 16.9%;
+        --secondary-foreground: 210 40% 98%;
+
+        --muted: 215 27.9% 16.9%;
+        --muted-foreground: 217.9 10.6% 64.9%;
+
+        --accent: 215 27.9% 16.9%;
+        --accent-foreground: 210 40% 98%;
+
+        --destructive: 0 62.8% 30.6%;
+        --destructive-foreground: 210 40% 98%;
+
+        --success: 142 76% 26%;
+        --success-foreground: 210 40% 98%;
+
+        --warning: 38 92% 40%;
+        --warning-foreground: 210 40% 98%;
+
+        --info: 199 89% 38%;
+        --info-foreground: 210 40% 98%;
+
+        --border: 215 27.9% 16.9%;
+        --input: 215 27.9% 16.9%;
+        --ring: 217 91% 60%;
+
+        /* Legacy variables for backward compatibility */
+        --bg: #0B0F1A;
+        --surface: #111A2E;
+        --surface-2: #0F1628;
+        --text: rgba(255, 255, 255, 0.92);
+    }
+
+    /* Apply dark mode by default for this app */
+    :root {
+        color-scheme: dark;
+    }
+
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+        font-family: 'Inter', system-ui, sans-serif;
+        font-feature-settings: "rlig" 1, "calt" 1;
+    }
+
+    .font-mono {
+        font-family: 'JetBrains Mono', monospace;
+    }
 }
 
 @layer utilities {
-  @keyframes slide-in-right {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
+    .shimmer {
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.08),
+            transparent
+        );
+        animation: shimmer 2s infinite;
     }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-
-  .animate-slide-in-right {
-    animation: slide-in-right 0.3s ease-out;
-  }
-
-  @keyframes shimmer {
-    0% {
-      transform: translateX(-100%);
-    }
-    100% {
-      transform: translateX(100%);
-    }
-  }
-
-  .shimmer {
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.08),
-      transparent
-    );
-    animation: shimmer 2s infinite;
-  }
 }

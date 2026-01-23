@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { StreamingIndicator } from '@ainative/ai-kit';
 import { useProjectStats } from '../hooks/useRuns';
 import { useProject } from '../hooks/useProject';
 import { appConfig } from '../config/app.config';

@@ -41,18 +41,18 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           const savedProject = projectsList.find(p => p.project_id === savedProjectId);
           if (savedProject) {
             setCurrentProject(savedProject);
-            localStorage.setItem('projectId', savedProject.project_id);
+            localStorage.setItem('projectId', savedProject.project_id ?? savedProject.id ?? '');
           } else {
             // Saved project not found, use first available
             setCurrentProject(projectsList[0]);
-            localStorage.setItem('projectId', projectsList[0].project_id);
-            localStorage.setItem('selectedProjectId', projectsList[0].project_id);
+            localStorage.setItem('projectId', projectsList[0].project_id ?? projectsList[0].id ?? '');
+            localStorage.setItem('selectedProjectId', projectsList[0].project_id ?? projectsList[0].id ?? '');
           }
         } else if (projectsList.length > 0) {
           // No saved project, use first available
           setCurrentProject(projectsList[0]);
-          localStorage.setItem('projectId', projectsList[0].project_id);
-          localStorage.setItem('selectedProjectId', projectsList[0].project_id);
+          localStorage.setItem('projectId', projectsList[0].project_id ?? projectsList[0].id ?? '');
+          localStorage.setItem('selectedProjectId', projectsList[0].project_id ?? projectsList[0].id ?? '');
         }
       } catch (error) {
         console.error('Failed to fetch projects:', error);
@@ -67,8 +67,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   // Save selected project to localStorage when it changes
   useEffect(() => {
     if (currentProject) {
-      localStorage.setItem('selectedProjectId', currentProject.project_id);
-      localStorage.setItem('projectId', currentProject.project_id);
+      const projectId = currentProject.project_id ?? currentProject.id ?? '';
+      localStorage.setItem('selectedProjectId', projectId);
+      localStorage.setItem('projectId', projectId);
     } else {
       localStorage.removeItem('selectedProjectId');
       localStorage.removeItem('projectId');
