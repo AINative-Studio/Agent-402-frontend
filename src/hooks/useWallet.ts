@@ -90,15 +90,18 @@ export function useWallet(): WalletState {
         },
     });
 
-    // Format native balance
+    // Format native balance (Arc uses USDC as native token with 6 decimals)
     const nativeBalance = nativeBalanceData
-        ? `${parseFloat(formatUnits(nativeBalanceData.value, 18)).toFixed(4)} ${nativeBalanceData.symbol}`
-        : '0 ARC';
-
-    // Format USDC balance (6 decimals)
-    const usdcBalance = usdcBalanceData
-        ? `${parseFloat(formatUnits(usdcBalanceData as bigint, 6)).toFixed(2)} USDC`
+        ? `${parseFloat(formatUnits(nativeBalanceData.value, nativeBalanceData.decimals)).toFixed(2)} ${nativeBalanceData.symbol}`
         : '0.00 USDC';
+
+    // Format USDC balance - on Arc, native IS USDC, so use native balance
+    // Only use ERC-20 balance if a separate USDC contract is configured
+    const usdcBalance = USDC_ADDRESS !== '0x0000000000000000000000000000000000000000' && usdcBalanceData
+        ? `${parseFloat(formatUnits(usdcBalanceData as bigint, 6)).toFixed(2)} USDC`
+        : nativeBalanceData
+            ? `${parseFloat(formatUnits(nativeBalanceData.value, nativeBalanceData.decimals)).toFixed(2)} USDC`
+            : '0.00 USDC';
 
     // Switch to Arc Testnet
     const switchToArcTestnet = async () => {
