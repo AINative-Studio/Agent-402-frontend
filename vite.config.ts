@@ -107,37 +107,23 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       rollupOptions: {
         output: {
           // Manual chunk splitting for better caching
-          manualChunks: (id: string) => {
-            // Vendor chunk: Core React libraries
-            if (id.includes('node_modules')) {
-              // Separate React and React DOM
-              if (id.includes('react') || id.includes('react-dom')) {
-                return 'vendor-react';
-              }
-
-              // Separate React Router
-              if (id.includes('react-router-dom')) {
-                return 'vendor-router';
-              }
-
-              // Separate TanStack Query
-              if (id.includes('@tanstack/react-query')) {
-                return 'vendor-query';
-              }
-
-              // Separate Axios
-              if (id.includes('axios')) {
-                return 'vendor-axios';
-              }
-
-              // Separate Lucide icons
-              if (id.includes('lucide-react')) {
-                return 'vendor-icons';
-              }
-
-              // All other node_modules go to vendor-misc
-              return 'vendor-misc';
-            }
+          // Using object-based config to avoid circular dependencies
+          manualChunks: {
+            // Core React ecosystem - must load first
+            'vendor-react': [
+              'react',
+              'react-dom',
+              'react-router-dom',
+              'scheduler',
+            ],
+            // TanStack Query
+            'vendor-query': ['@tanstack/react-query'],
+            // Axios
+            'vendor-axios': ['axios'],
+            // Lucide icons (large)
+            'vendor-icons': ['lucide-react'],
+            // Recharts (large charting library)
+            'vendor-charts': ['recharts'],
           },
 
           // Asset file naming with content hash
