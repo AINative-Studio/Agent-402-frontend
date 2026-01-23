@@ -59,12 +59,11 @@ export default defineConfig({
   // Output directory for test artifacts
   outputDir: 'test-results/',
 
-  // Web server configuration (optional - start dev server before tests)
-  // Uncomment to auto-start the dev server
-  // webServer: {
-  //   command: 'npm run dev',
-  //   url: 'http://localhost:5173',
-  //   reuseExistingServer: !process.env.CI,
-  //   timeout: 120000,
-  // },
+  // Web server configuration - auto-start dev server before tests
+  webServer: {
+    command: 'npm run dev',
+    url: 'http://localhost:5173',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120000,
+  },
 });
