@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Bot, DollarSign, FileText, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import {
     Dialog,
@@ -8,13 +10,22 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useWallet } from '../hooks/useWallet';
 import { useHireAgent } from '../hooks/useBlockchain';
+import { agentHireSchema, type AgentHireFormData } from '../lib/validations';
 import { cn } from '@/lib/utils';
 
 /**
@@ -56,13 +67,15 @@ function calculateEstimatedPrice(agent: AgentInfo, taskLength: number): number {
 }
 
 /**
- * HireAgentModal - Modal for hiring an agent
+ * HireAgentModal - Modal for hiring an agent with form validation
  *
  * Features:
+ * - react-hook-form integration with Zod validation
  * - Agent selection display
- * - Task description input
+ * - Task description input with validation
  * - Quoted price display
  * - USDC payment confirmation
+ * - Success/error states
  */
 export function HireAgentModal({
     open,
@@ -73,29 +86,60 @@ export function HireAgentModal({
     const { isConnected, usdcBalance } = useWallet();
     const { hireAgent, isPending, isConfirming, isSuccess, error } = useHireAgent();
 
-    const [taskDescription, setTaskDescription] = useState('');
-    const [customPrice, setCustomPrice] = useState<string>('');
+    const form = useForm<AgentHireFormData>({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolver: zodResolver(agentHireSchema) as any,
+        defaultValues: {
+            agentTokenId: agent?.tokenId || 0,
+            taskDescription: '',
+            customPrice: null,
+        },
+    });
+
+    const watchTaskDescription = form.watch('taskDescription');
+    const watchCustomPrice = form.watch('customPrice');
+
+    // Update agent token ID when agent changes
+    useEffect(() => {
+        if (agent) {
+            form.setValue('agentTokenId', agent.tokenId);
+        }
+    }, [agent, form]);
+
+    // Reset form when modal opens
+    useEffect(() => {
+        if (open) {
+            form.reset({
+                agentTokenId: agent?.tokenId || 0,
+                taskDescription: '',
+                customPrice: null,
+            });
+        }
+    }, [open, agent, form]);
 
     // Calculate estimated price based on task
-    const estimatedPrice = agent
-        ? calculateEstimatedPrice(agent, taskDescription.length)
-        : 0;
+    const estimatedPrice = useMemo(() => {
+        if (!agent) return 0;
+        return calculateEstimatedPrice(agent, watchTaskDescription?.length || 0);
+    }, [agent, watchTaskDescription]);
 
     // Use custom price if set, otherwise use estimated
-    const finalPrice = customPrice ? parseFloat(customPrice) : estimatedPrice;
+    const finalPrice = watchCustomPrice || estimatedPrice;
 
     // Parse USDC balance
     const availableBalance = parseFloat(usdcBalance.replace(' USDC', '')) || 0;
     const hasInsufficientFunds = finalPrice > availableBalance;
 
-    const handleSubmit = async () => {
-        if (!agent || !taskDescription.trim()) return;
+    const onSubmit = async (data: AgentHireFormData) => {
+        if (!agent) return;
+
+        const price = data.customPrice || estimatedPrice;
 
         try {
             await hireAgent(
                 agent.tokenId,
-                taskDescription,
-                BigInt(Math.floor(finalPrice * 1e6)) // Convert to USDC units (6 decimals)
+                data.taskDescription,
+                BigInt(Math.floor(price * 1e6)) // Convert to USDC units (6 decimals)
             );
             onSuccess?.();
         } catch (err) {
@@ -104,8 +148,7 @@ export function HireAgentModal({
     };
 
     const handleClose = () => {
-        setTaskDescription('');
-        setCustomPrice('');
+        form.reset();
         onClose();
     };
 
@@ -151,138 +194,165 @@ export function HireAgentModal({
                         </p>
                     </div>
                 ) : agent ? (
-                    <div className="space-y-6 py-4">
-                        {/* Agent Info */}
-                        <div className="flex items-start gap-4 p-4 bg-secondary/50 rounded-lg">
-                            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                <Bot className="w-6 h-6 text-primary" />
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+                            {/* Agent Info */}
+                            <div className="flex items-start gap-4 p-4 bg-secondary/50 rounded-lg">
+                                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                    <Bot className="w-6 h-6 text-primary" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h4 className="font-semibold">{agent.name}</h4>
+                                        <Badge variant="secondary">{agent.role}</Badge>
+                                    </div>
+                                    <div className="text-xs text-muted-foreground font-mono truncate">
+                                        {agent.did}
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <Badge variant="outline" className="text-xs">
+                                            {TRUST_TIER_LABELS[agent.trustTier] || 'Unknown'}
+                                        </Badge>
+                                        {agent.hourlyRate && (
+                                            <span className="text-xs text-muted-foreground">
+                                                ~${agent.hourlyRate}/hr
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <h4 className="font-semibold">{agent.name}</h4>
-                                    <Badge variant="secondary">{agent.role}</Badge>
-                                </div>
-                                <div className="text-xs text-muted-foreground font-mono truncate">
-                                    {agent.did}
-                                </div>
-                                <div className="flex items-center gap-2 mt-2">
-                                    <Badge variant="outline" className="text-xs">
-                                        {TRUST_TIER_LABELS[agent.trustTier] || 'Unknown'}
-                                    </Badge>
-                                    {agent.hourlyRate && (
-                                        <span className="text-xs text-muted-foreground">
-                                            ~${agent.hourlyRate}/hr
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
 
-                        {/* Task Description */}
-                        <div className="space-y-2">
-                            <Label htmlFor="task" className="flex items-center gap-1">
-                                <FileText className="w-4 h-4" />
-                                Task Description
-                            </Label>
-                            <Textarea
-                                id="task"
-                                placeholder="Describe the task you want the agent to perform..."
-                                value={taskDescription}
-                                onChange={(e) => setTaskDescription(e.target.value)}
-                                rows={4}
-                                className="resize-none"
+                            {/* Task Description */}
+                            <FormField
+                                control={form.control}
+                                name="taskDescription"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-1">
+                                            <FileText className="w-4 h-4" />
+                                            Task Description
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Textarea
+                                                placeholder="Describe the task you want the agent to perform..."
+                                                rows={4}
+                                                className="resize-none"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormDescription>
+                                            Be specific about your requirements for accurate pricing.
+                                            ({watchTaskDescription?.length || 0}/2000 characters)
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
                             />
-                            <p className="text-xs text-muted-foreground">
-                                Be specific about your requirements for accurate pricing.
-                            </p>
-                        </div>
 
-                        {/* Price Section */}
-                        <div className="space-y-3">
-                            <Label className="flex items-center gap-1">
-                                <DollarSign className="w-4 h-4" />
-                                Payment (USDC)
-                            </Label>
-
-                            {/* Estimated Price */}
-                            <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
-                                <span className="text-sm text-muted-foreground">
-                                    Estimated Price:
-                                </span>
-                                <span className="font-semibold">
-                                    ${estimatedPrice.toFixed(2)} USDC
-                                </span>
-                            </div>
-
-                            {/* Custom Price Input */}
-                            <div className="flex items-center gap-2">
-                                <Input
-                                    type="number"
-                                    placeholder="Custom amount"
-                                    value={customPrice}
-                                    onChange={(e) => setCustomPrice(e.target.value)}
-                                    min="0"
-                                    step="0.01"
-                                    className="flex-1"
-                                />
-                                <span className="text-sm text-muted-foreground">USDC</span>
-                            </div>
-
-                            {/* Balance Check */}
-                            <div className={cn(
-                                'flex items-center justify-between text-sm',
-                                hasInsufficientFunds && 'text-destructive'
-                            )}>
-                                <span>Your Balance:</span>
-                                <span className="font-mono">{usdcBalance}</span>
-                            </div>
-
-                            {hasInsufficientFunds && (
-                                <p className="text-xs text-destructive">
-                                    Insufficient USDC balance for this transaction.
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Error Display */}
-                        {error && (
-                            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                                <p className="text-sm text-destructive">
-                                    {error.message || 'Failed to submit transaction'}
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                ) : null}
-
-                <DialogFooter>
-                    <Button variant="outline" onClick={handleClose} disabled={isPending || isConfirming}>
-                        Cancel
-                    </Button>
-                    {isConnected && agent && (
-                        <Button
-                            onClick={handleSubmit}
-                            disabled={
-                                !taskDescription.trim() ||
-                                hasInsufficientFunds ||
-                                isPending ||
-                                isConfirming
-                            }
-                        >
-                            {isPending || isConfirming ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    {isConfirming ? 'Confirming...' : 'Processing...'}
-                                </>
-                            ) : (
-                                <>
+                            {/* Price Section */}
+                            <div className="space-y-3">
+                                <FormLabel className="flex items-center gap-1">
                                     <DollarSign className="w-4 h-4" />
-                                    Pay ${finalPrice.toFixed(2)} USDC
-                                </>
+                                    Payment (USDC)
+                                </FormLabel>
+
+                                {/* Estimated Price */}
+                                <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
+                                    <span className="text-sm text-muted-foreground">
+                                        Estimated Price:
+                                    </span>
+                                    <span className="font-semibold">
+                                        ${estimatedPrice.toFixed(2)} USDC
+                                    </span>
+                                </div>
+
+                                {/* Custom Price Input */}
+                                <FormField
+                                    control={form.control}
+                                    name="customPrice"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <div className="flex items-center gap-2">
+                                                <FormControl>
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="Custom amount"
+                                                        min="0"
+                                                        step="0.01"
+                                                        className="flex-1"
+                                                        {...field}
+                                                        value={field.value ?? ''}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            field.onChange(val ? parseFloat(val) : null);
+                                                        }}
+                                                    />
+                                                </FormControl>
+                                                <span className="text-sm text-muted-foreground">USDC</span>
+                                            </div>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {/* Balance Check */}
+                                <div className={cn(
+                                    'flex items-center justify-between text-sm',
+                                    hasInsufficientFunds && 'text-destructive'
+                                )}>
+                                    <span>Your Balance:</span>
+                                    <span className="font-mono">{usdcBalance}</span>
+                                </div>
+
+                                {hasInsufficientFunds && (
+                                    <p className="text-xs text-destructive">
+                                        Insufficient USDC balance for this transaction.
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Error Display */}
+                            {error && (
+                                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                                    <p className="text-sm text-destructive">
+                                        {error.message || 'Failed to submit transaction'}
+                                    </p>
+                                </div>
                             )}
-                        </Button>
-                    )}
-                </DialogFooter>
+
+                            <DialogFooter>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleClose}
+                                    disabled={isPending || isConfirming}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={
+                                        hasInsufficientFunds ||
+                                        isPending ||
+                                        isConfirming
+                                    }
+                                >
+                                    {isPending || isConfirming ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            {isConfirming ? 'Confirming...' : 'Processing...'}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <DollarSign className="w-4 h-4" />
+                                            Pay ${finalPrice.toFixed(2)} USDC
+                                        </>
+                                    )}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </Form>
+                ) : null}
             </DialogContent>
         </Dialog>
     );

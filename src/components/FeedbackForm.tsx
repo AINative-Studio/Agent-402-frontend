@@ -1,11 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Star, Send, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from '@/components/ui/form';
 import { useWallet } from '../hooks/useWallet';
 import { useSubmitFeedback } from '../hooks/useBlockchain';
+import { feedbackSchema, type FeedbackFormData } from '../lib/validations';
 import { cn } from '@/lib/utils';
 
 interface FeedbackFormProps {
@@ -78,13 +89,15 @@ const RATING_LABELS = [
 ];
 
 /**
- * FeedbackForm - Submit feedback for agent reputation
+ * FeedbackForm - Submit feedback for agent reputation with form validation
  *
  * Features:
- * - Rating (1-5 stars)
- * - Comment input
+ * - react-hook-form integration with Zod validation
+ * - Rating (1-5 stars) with interactive hover states
+ * - Comment input with character count
  * - Submit to ReputationRegistry contract
  * - Loading and success states
+ * - Accessible form controls
  */
 export function FeedbackForm({
     agentTokenId,
@@ -95,19 +108,32 @@ export function FeedbackForm({
     const { isConnected } = useWallet();
     const { submitFeedback, isPending, isConfirming, isSuccess, error } = useSubmitFeedback();
 
-    const [rating, setRating] = useState(0);
     const [hoveredRating, setHoveredRating] = useState<number | null>(null);
-    const [comment, setComment] = useState('');
 
-    const displayRating = hoveredRating !== null ? hoveredRating : rating;
+    const form = useForm<FeedbackFormData>({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolver: zodResolver(feedbackSchema) as any,
+        defaultValues: {
+            agentTokenId,
+            rating: 0,
+            comment: '',
+        },
+    });
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const watchRating = form.watch('rating');
+    const watchComment = form.watch('comment');
+    const displayRating = hoveredRating !== null ? hoveredRating : watchRating;
 
-        if (!rating || !isConnected) return;
+    // Update agent token ID when it changes
+    useEffect(() => {
+        form.setValue('agentTokenId', agentTokenId);
+    }, [agentTokenId, form]);
+
+    const onSubmit = async (data: FeedbackFormData) => {
+        if (!isConnected) return;
 
         try {
-            await submitFeedback(agentTokenId, rating, comment);
+            await submitFeedback(agentTokenId, data.rating, data.comment || '');
             onSuccess?.();
         } catch (err) {
             console.error('Failed to submit feedback:', err);
@@ -115,9 +141,12 @@ export function FeedbackForm({
     };
 
     const handleReset = () => {
-        setRating(0);
+        form.reset({
+            agentTokenId,
+            rating: 0,
+            comment: '',
+        });
         setHoveredRating(null);
-        setComment('');
     };
 
     // Success state
@@ -167,77 +196,95 @@ export function FeedbackForm({
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Star Rating */}
-                    <div className="space-y-2">
-                        <Label>Rating</Label>
-                        <div className="flex items-center gap-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <RatingButton
-                                    key={star}
-                                    rating={star}
-                                    selectedRating={rating}
-                                    hoveredRating={hoveredRating}
-                                    onSelect={setRating}
-                                    onHover={setHoveredRating}
-                                    onLeave={() => setHoveredRating(null)}
-                                />
-                            ))}
-                        </div>
-                        {displayRating > 0 && (
-                            <p className="text-sm text-muted-foreground">
-                                {RATING_LABELS[displayRating]}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Comment */}
-                    <div className="space-y-2">
-                        <Label htmlFor="feedback-comment">
-                            Comment <span className="text-muted-foreground">(optional)</span>
-                        </Label>
-                        <Textarea
-                            id="feedback-comment"
-                            placeholder="Share your experience working with this agent..."
-                            value={comment}
-                            onChange={(e) => setComment(e.target.value)}
-                            rows={3}
-                            className="resize-none"
-                            maxLength={500}
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        {/* Star Rating */}
+                        <FormField
+                            control={form.control}
+                            name="rating"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Rating</FormLabel>
+                                    <FormControl>
+                                        <div className="flex items-center gap-1">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <RatingButton
+                                                    key={star}
+                                                    rating={star}
+                                                    selectedRating={field.value}
+                                                    hoveredRating={hoveredRating}
+                                                    onSelect={(value) => field.onChange(value)}
+                                                    onHover={setHoveredRating}
+                                                    onLeave={() => setHoveredRating(null)}
+                                                />
+                                            ))}
+                                        </div>
+                                    </FormControl>
+                                    {displayRating > 0 && (
+                                        <FormDescription>
+                                            {RATING_LABELS[displayRating]}
+                                        </FormDescription>
+                                    )}
+                                    <FormMessage />
+                                </FormItem>
+                            )}
                         />
-                        <p className="text-xs text-muted-foreground text-right">
-                            {comment.length}/500
-                        </p>
-                    </div>
 
-                    {/* Error Display */}
-                    {error && (
-                        <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                            <p className="text-sm text-destructive">
-                                {error.message || 'Failed to submit feedback'}
-                            </p>
-                        </div>
-                    )}
+                        {/* Comment */}
+                        <FormField
+                            control={form.control}
+                            name="comment"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>
+                                        Comment <span className="text-muted-foreground">(optional)</span>
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Textarea
+                                            placeholder="Share your experience working with this agent..."
+                                            rows={3}
+                                            className="resize-none"
+                                            maxLength={500}
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormDescription className="text-right">
+                                        {watchComment?.length || 0}/500
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
-                    {/* Submit Button */}
-                    <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={!rating || isPending || isConfirming}
-                    >
-                        {isPending || isConfirming ? (
-                            <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                {isConfirming ? 'Confirming...' : 'Submitting...'}
-                            </>
-                        ) : (
-                            <>
-                                <Send className="w-4 h-4" />
-                                Submit Feedback
-                            </>
+                        {/* Error Display */}
+                        {error && (
+                            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                                <p className="text-sm text-destructive">
+                                    {error.message || 'Failed to submit feedback'}
+                                </p>
+                            </div>
                         )}
-                    </Button>
-                </form>
+
+                        {/* Submit Button */}
+                        <Button
+                            type="submit"
+                            className="w-full"
+                            disabled={!watchRating || isPending || isConfirming}
+                        >
+                            {isPending || isConfirming ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    {isConfirming ? 'Confirming...' : 'Submitting...'}
+                                </>
+                            ) : (
+                                <>
+                                    <Send className="w-4 h-4" />
+                                    Submit Feedback
+                                </>
+                            )}
+                        </Button>
+                    </form>
+                </Form>
             </CardContent>
         </Card>
     );

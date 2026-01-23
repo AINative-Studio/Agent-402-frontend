@@ -1,60 +1,31 @@
-import { useLocation, Link } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
-import { appConfig } from '../../config/app.config';
 import { WalletConnect } from '../WalletConnect';
+import { Breadcrumbs } from './Breadcrumbs';
+import { MobileNav } from './MobileNav';
 
+/**
+ * Header component - Top navigation bar with breadcrumbs and wallet connection
+ *
+ * Features:
+ * - Dynamic breadcrumb navigation (extracted to Breadcrumbs component)
+ * - Mobile navigation drawer (hamburger menu)
+ * - Wallet connection button
+ * - Responsive design
+ */
 export function Header() {
-    const location = useLocation();
-
-    const getBreadcrumbs = () => {
-        const paths = location.pathname.split('/').filter(Boolean);
-
-        if (paths.length === 0) {
-            return [{ label: appConfig.breadcrumbs.defaultLabel, path: '/' }];
-        }
-
-        const breadcrumbs = [{ label: appConfig.breadcrumbs.defaultLabel, path: '/' }];
-
-        let currentPath = '';
-        paths.forEach((segment, _index) => {
-            currentPath += `/${segment}`;
-
-            const routeConfig = appConfig.breadcrumbs.routes[segment];
-            const label = routeConfig
-                ? routeConfig.label
-                : appConfig.helpers.formatBreadcrumbLabel(segment);
-
-            breadcrumbs.push({
-                label,
-                path: currentPath,
-            });
-        });
-
-        return breadcrumbs;
-    };
-
-    const breadcrumbs = getBreadcrumbs();
-
     return (
-        <header className="h-16 bg-[var(--surface)] border-b border-[var(--border)] px-8 flex items-center justify-between">
-            <nav className="flex items-center gap-2">
-                {breadcrumbs.map((crumb, index) => (
-                    <div key={crumb.path} className="flex items-center gap-2">
-                        {index > 0 && <ChevronRight className="w-4 h-4 text-[var(--subtle)]" />}
-                        <Link
-                            to={crumb.path}
-                            className={`text-sm ${
-                                index === breadcrumbs.length - 1
-                                    ? 'text-[var(--text)] font-medium'
-                                    : 'text-[var(--muted)] hover:text-[var(--text)]'
-                            }`}
-                        >
-                            {crumb.label}
-                        </Link>
-                    </div>
-                ))}
-            </nav>
-            <WalletConnect />
+        <header className="h-16 bg-card border-b border-border px-4 md:px-8 flex items-center justify-between gap-4">
+            {/* Mobile Nav + Breadcrumbs */}
+            <div className="flex items-center gap-4">
+                <MobileNav />
+                <nav className="hidden md:block">
+                    <Breadcrumbs />
+                </nav>
+            </div>
+
+            {/* Right side actions */}
+            <div className="flex items-center gap-2">
+                <WalletConnect />
+            </div>
         </header>
     );
 }
