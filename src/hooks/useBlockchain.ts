@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { contracts } from '../lib/contracts';
 import type { Address } from 'viem';
@@ -164,13 +165,32 @@ export function useHireAgent() {
         hash,
     });
 
+    // Log errors and transaction status
+    useEffect(() => {
+        if (error) {
+            console.error('useHireAgent error:', error);
+        }
+    }, [error]);
+
+    useEffect(() => {
+        if (hash) {
+            console.log('Transaction submitted:', hash);
+        }
+    }, [hash]);
+
+    useEffect(() => {
+        if (isSuccess) {
+            console.log('Transaction confirmed!');
+        }
+    }, [isSuccess]);
+
     /**
      * Hire an agent by funding their treasury
      * @param agentTokenId - The agent's NFT token ID
      * @param _taskDescription - Task description (stored off-chain, used for UX)
      * @param amount - Amount in USDC (18 decimals for Arc native USDC)
      */
-    const hireAgent = async (
+    const hireAgent = (
         agentTokenId: number,
         _taskDescription: string,
         amount: bigint
@@ -180,15 +200,28 @@ export function useHireAgent() {
         // but we use the mapping from the contract
         const treasuryId = BigInt(agentTokenId);
 
+        console.log('Hiring agent:', {
+            agentTokenId,
+            treasuryId: treasuryId.toString(),
+            amount: amount.toString(),
+            contractAddress: contracts.agentTreasury.address,
+        });
+
         // Fund the agent's treasury with USDC
         // On Arc Testnet, USDC is the native currency, so we use msg.value
-        writeContract({
-            address: contracts.agentTreasury.address,
-            abi: contracts.agentTreasury.abi,
-            functionName: 'fundTreasury',
-            args: [treasuryId, amount],
-            value: amount, // Native USDC on Arc
-        });
+        try {
+            writeContract({
+                address: contracts.agentTreasury.address,
+                abi: contracts.agentTreasury.abi,
+                functionName: 'fundTreasury',
+                args: [treasuryId, amount],
+                value: amount, // Native USDC on Arc
+            });
+            console.log('writeContract called successfully');
+        } catch (err) {
+            console.error('writeContract error:', err);
+            throw err;
+        }
     };
 
     return {

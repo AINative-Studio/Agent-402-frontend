@@ -130,22 +130,33 @@ export function HireAgentModal({
     const availableBalance = parseFloat(usdcBalance.replace(' USDC', '')) || 0;
     const hasInsufficientFunds = finalPrice > availableBalance;
 
-    const onSubmit = async (data: AgentHireFormData) => {
-        if (!agent) return;
+    const onSubmit = (data: AgentHireFormData) => {
+        if (!agent) {
+            console.error('No agent selected');
+            return;
+        }
 
         const price = data.customPrice || estimatedPrice;
+
+        console.log('Submitting hire request:', {
+            agent: agent.name,
+            tokenId: agent.tokenId,
+            price,
+            taskDescription: data.taskDescription,
+        });
 
         try {
             // Convert to USDC units (18 decimals on Arc Testnet native USDC)
             // price is in human-readable USDC (e.g., 10.50)
             // We need to convert to wei-like units (e.g., 10.50 * 10^18)
             const amountInWei = BigInt(Math.floor(price * 1e18));
-            await hireAgent(
+            console.log('Amount in wei:', amountInWei.toString());
+
+            hireAgent(
                 agent.tokenId,
                 data.taskDescription,
                 amountInWei
             );
-            onSuccess?.();
         } catch (err) {
             console.error('Failed to hire agent:', err);
         }
