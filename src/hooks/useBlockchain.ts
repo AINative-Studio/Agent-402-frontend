@@ -157,6 +157,13 @@ export function useTreasuryInfo(treasuryId: number | undefined) {
  *
  * Calls fundTreasury on the AgentTreasury contract to pay an agent.
  * On Arc Testnet, USDC is the native currency, so we send value with the transaction.
+ *
+ * Note: Treasury IDs are different from Agent Token IDs!
+ * - Agent Token IDs: 0, 1, 2, ... (from AgentRegistry)
+ * - Treasury IDs: 1, 2, 3, ... (from AgentTreasury, start at 1)
+ *
+ * For demo purposes, we map agentTokenId to treasuryId as (agentTokenId + 1)
+ * In production, use getTreasuryByAgent() to look up the actual treasury ID.
  */
 export function useHireAgent() {
     const { writeContract, data: hash, isPending, error, reset } = useWriteContract();
@@ -195,10 +202,10 @@ export function useHireAgent() {
         _taskDescription: string,
         amount: bigint
     ) => {
-        // First, we need to get the treasury ID for this agent
-        // The treasury ID is typically equal to the agent token ID
-        // but we use the mapping from the contract
-        const treasuryId = BigInt(agentTokenId);
+        // Treasury IDs start at 1, not 0
+        // For the demo agents (tokenId 0, 1, 2), treasuries were created as (1, 2, 3)
+        // So treasuryId = agentTokenId + 1
+        const treasuryId = BigInt(agentTokenId + 1);
 
         console.log('Hiring agent:', {
             agentTokenId,
