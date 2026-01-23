@@ -19,7 +19,7 @@ const maxTaskLength = 2000;
 export const agentHireSchema = z.object({
     agentTokenId: z.number({
         required_error: 'Agent selection is required',
-    }).positive('Invalid agent ID'),
+    }).nonnegative('Invalid agent ID'),
 
     taskDescription: z
         .string({
@@ -46,7 +46,7 @@ export type AgentHireFormData = z.infer<typeof agentHireSchema>;
 export const feedbackSchema = z.object({
     agentTokenId: z.number({
         required_error: 'Agent selection is required',
-    }).positive('Invalid agent ID'),
+    }).nonnegative('Invalid agent ID'),
 
     rating: z
         .number({
