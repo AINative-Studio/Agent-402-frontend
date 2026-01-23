@@ -260,8 +260,9 @@ export function Dashboard() {
     };
 
     const handleHireSuccess = () => {
-        setHireModalOpen(false);
-        setSelectedAgent(null);
+        // Don't close the modal - let it show the success screen
+        // User will close it manually after seeing the confirmation
+        console.log('Hire success callback triggered');
     };
 
     const handleFeedbackSuccess = () => {
