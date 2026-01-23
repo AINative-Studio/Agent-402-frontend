@@ -1,8 +1,6 @@
 import {
     LayoutDashboard,
     PlayCircle,
-    Search,
-    Table2,
     Bot,
     Activity,
     Database,
@@ -10,7 +8,6 @@ import {
     Shield,
     CheckCircle,
     AlertCircle,
-    Scan,
     FileText,
     Wrench,
     Globe,
@@ -30,13 +27,9 @@ export const navigationItems: NavigationItem[] = [
     { path: '/', label: 'Overview', icon: LayoutDashboard },
     { path: '/dashboard', label: 'Agent Dashboard', icon: Wallet },
     { path: '/demos', label: 'Demo Dashboard', icon: Sparkles },
-    { path: '/aikit-showcase', label: 'AIKit Showcase', icon: Sparkles },
     { path: '/runs', label: 'Runs', icon: PlayCircle },
     { path: '/agents', label: 'Agents', icon: Bot },
-    { path: '/embeddings', label: 'Embeddings', icon: Search },
-    { path: '/vector-search', label: 'Vector Search', icon: Scan },
     { path: '/documents', label: 'Documents', icon: FileText },
-    { path: '/tables', label: 'Tables', icon: Table2 },
     { path: '/x402-discovery', label: 'X402 Discovery', icon: Globe },
     { path: '/signature-debugger', label: 'Signature Debugger', icon: Shield },
 ];
@@ -99,17 +92,8 @@ export const breadcrumbConfig: BreadcrumbConfig = {
         agents: {
             label: 'Agents',
         },
-        embeddings: {
-            label: 'Embeddings',
-        },
-        'vector-search': {
-            label: 'Vector Search',
-        },
         documents: {
             label: 'Documents',
-        },
-        tables: {
-            label: 'Tables',
         },
         'x402-discovery': {
             label: 'X402 Discovery',
