@@ -106,25 +106,9 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       // Rollup configuration for chunk splitting
       rollupOptions: {
         output: {
-          // Manual chunk splitting for better caching
-          // Using object-based config to avoid circular dependencies
-          manualChunks: {
-            // Core React ecosystem - must load first
-            'vendor-react': [
-              'react',
-              'react-dom',
-              'react-router-dom',
-              'scheduler',
-            ],
-            // TanStack Query
-            'vendor-query': ['@tanstack/react-query'],
-            // Axios
-            'vendor-axios': ['axios'],
-            // Lucide icons (large)
-            'vendor-icons': ['lucide-react'],
-            // Recharts (large charting library)
-            'vendor-charts': ['recharts'],
-          },
+          // Let Rollup handle chunk splitting automatically
+          // Manual chunking was causing React dependencies to load out of order
+          manualChunks: undefined,
 
           // Asset file naming with content hash
           assetFileNames: (assetInfo) => {
