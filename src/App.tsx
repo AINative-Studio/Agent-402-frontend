@@ -25,6 +25,7 @@ import { Documents } from './pages/Documents';
 import { X402Discovery } from './pages/X402Discovery';
 import { SignatureDebugger } from './pages/SignatureDebugger';
 import { DemoDashboard } from './pages/DemoDashboard';
+import { Dashboard } from './pages/Dashboard';
 import { Login } from './pages/Login';
 
 function App() {
@@ -53,6 +54,7 @@ function App() {
                   </ProtectedRoute>
                 }>
                   <Route index element={<Overview />} />
+                  <Route path="dashboard" element={<Dashboard />} />
                   <Route path="runs" element={<RunsList />} />
                   <Route path="runs/:runId" element={<RunDetail />} />
                   <Route path="runs/:runId/tools" element={<ToolCalls />} />
