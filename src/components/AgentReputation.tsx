@@ -126,12 +126,11 @@ export function AgentReputation({
         return <ReputationSkeleton compact={compact} />;
     }
 
+    // On error (e.g., RPC unavailable), show default values instead of error
+    // This handles cases like invalid SSL certs on the RPC endpoint
     if (error) {
-        return (
-            <div className={cn('text-sm text-destructive', className)}>
-                Failed to load reputation
-            </div>
-        );
+        // Fall through to show default values (tier 0, no score)
+        // instead of displaying an error message
     }
 
     // Default values if no reputation data yet
