@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
     ArrowRight,
     ArrowUpRight,
@@ -73,6 +73,7 @@ const AGENT_WALLETS: AgentWallet[] = [
  */
 interface TransferResponse {
     transfer_id: string;
+    circle_transfer_id?: string;
     status: 'PENDING' | 'COMPLETE' | 'FAILED';
     amount: string;
     source_wallet_id: string;
@@ -206,15 +207,42 @@ function TransferSuccess({
             {/* Success Header */}
             <div className="text-center space-y-4">
                 <div className="relative mx-auto w-16 h-16">
-                    <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
-                    <div className="relative w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center border border-green-500/30">
-                        <CheckCircle2 className="w-8 h-8 text-green-400" />
-                    </div>
+                    {transfer.status === 'COMPLETE' ? (
+                        <>
+                            <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
+                            <div className="relative w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center border border-green-500/30">
+                                <CheckCircle2 className="w-8 h-8 text-green-400" />
+                            </div>
+                        </>
+                    ) : transfer.status === 'FAILED' ? (
+                        <div className="relative w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center border border-red-500/30">
+                            <XCircle className="w-8 h-8 text-red-400" />
+                        </div>
+                    ) : (
+                        <>
+                            <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-pulse" />
+                            <div className="relative w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/30">
+                                <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+                            </div>
+                        </>
+                    )}
                 </div>
                 <div>
-                    <h3 className="text-xl font-bold text-green-400">Transfer Initiated</h3>
+                    <h3 className={cn(
+                        "text-xl font-bold",
+                        transfer.status === 'COMPLETE' ? 'text-green-400' :
+                        transfer.status === 'FAILED' ? 'text-red-400' : 'text-blue-400'
+                    )}>
+                        {transfer.status === 'COMPLETE' ? 'Transfer Complete' :
+                         transfer.status === 'FAILED' ? 'Transfer Failed' :
+                         'Transfer Processing'}
+                    </h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                        Your USDC transfer has been submitted to the blockchain
+                        {transfer.status === 'COMPLETE'
+                            ? 'Your USDC transfer has been confirmed on the blockchain'
+                            : transfer.status === 'FAILED'
+                            ? 'The transfer could not be completed'
+                            : 'Your USDC transfer is being processed...'}
                     </p>
                 </div>
             </div>
@@ -447,6 +475,11 @@ export function CircleTransferModal({
     const destWallet = AGENT_WALLETS.find(w => w.id === destWalletId);
 
     const resetForm = useCallback(() => {
+        // Clear polling if active
+        if (pollingRef.current) {
+            clearInterval(pollingRef.current);
+            pollingRef.current = null;
+        }
         setTransferState('form');
         setSourceWalletId('');
         setDestWalletId('');
@@ -460,6 +493,42 @@ export function CircleTransferModal({
         // Delay reset to allow close animation
         setTimeout(resetForm, 200);
     }, [resetForm]);
+
+    // Ref for polling interval
+    const pollingRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Cleanup polling on unmount
+    useEffect(() => {
+        return () => {
+            if (pollingRef.current) {
+                clearInterval(pollingRef.current);
+            }
+        };
+    }, []);
+
+    // Poll for transfer status until COMPLETE or FAILED
+    const pollTransferStatus = useCallback(async (transferId: string) => {
+        if (!currentProject?.project_id) return;
+
+        try {
+            const response = await apiClient.get<TransferResponse>(
+                `/${currentProject.project_id}/circle/transfers/${transferId}`
+            );
+
+            if (response.data.status === 'COMPLETE' || response.data.status === 'FAILED') {
+                // Stop polling
+                if (pollingRef.current) {
+                    clearInterval(pollingRef.current);
+                    pollingRef.current = null;
+                }
+                // Update transfer with final status
+                setTransfer(response.data);
+                onTransferComplete?.(response.data);
+            }
+        } catch (err) {
+            console.error('Failed to poll transfer status:', err);
+        }
+    }, [currentProject?.project_id, onTransferComplete]);
 
     const handleTransfer = async () => {
         if (!currentProject?.project_id || !sourceWalletId || !destWalletId || !amount) {
@@ -493,7 +562,17 @@ export function CircleTransferModal({
 
             setTransfer(response.data);
             setTransferState('success');
-            onTransferComplete?.(response.data);
+
+            // If status is PENDING, start polling for updates
+            // Use circle_transfer_id for polling as it's more reliable
+            if (response.data.status === 'PENDING') {
+                const pollId = response.data.circle_transfer_id || response.data.transfer_id;
+                pollingRef.current = setInterval(() => {
+                    pollTransferStatus(pollId);
+                }, 2000); // Poll every 2 seconds
+            } else {
+                onTransferComplete?.(response.data);
+            }
         } catch (err: unknown) {
             console.error('Transfer failed:', err);
             const errorMessage = err && typeof err === 'object' && 'detail' in err
