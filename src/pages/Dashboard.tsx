@@ -13,6 +13,7 @@ import {
 import { HireAgentModal } from '../components/HireAgentModal';
 import { FeedbackForm } from '../components/FeedbackForm';
 import { CircleWalletCompact } from '../components/CircleWalletBalance';
+import { CircleTransferModal } from '../components/CircleTransferModal';
 import { useWallet, useAgentRegistry, useAgentTreasury, useReputationRegistry } from '../hooks/useWallet';
 import { useProject } from '../hooks/useProject';
 import { cn } from '@/lib/utils';
@@ -337,6 +338,31 @@ export function Dashboard() {
                     label="Reputation"
                 />
             </div>
+
+            {/* Circle Transfer Section */}
+            <Card className="border-blue-500/30 bg-gradient-to-r from-blue-500/5 to-purple-500/5">
+                <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 py-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center">
+                            <Circle className="w-6 h-6 text-blue-400" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-lg">Circle Programmable Wallets</h3>
+                            <p className="text-sm text-muted-foreground">
+                                Transfer USDC between agent wallets on Arc Testnet
+                            </p>
+                        </div>
+                    </div>
+                    <CircleTransferModal
+                        trigger={
+                            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                                <ArrowLeftRight className="w-4 h-4 mr-2" />
+                                Transfer USDC
+                            </Button>
+                        }
+                    />
+                </CardContent>
+            </Card>
 
             {/* Filter Bar */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between py-4 border-y border-border">
