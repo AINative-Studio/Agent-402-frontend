@@ -515,14 +515,19 @@ export function CircleTransferModal({
                 `/${currentProject.project_id}/circle/transfers/${transferId}`
             );
 
-            if (response.data.status === 'COMPLETE' || response.data.status === 'FAILED') {
+            // Normalize status to uppercase for comparison (backend returns lowercase)
+            const status = response.data.status?.toUpperCase();
+            if (status === 'COMPLETE' || status === 'FAILED') {
                 // Stop polling
                 if (pollingRef.current) {
                     clearInterval(pollingRef.current);
                     pollingRef.current = null;
                 }
-                // Update transfer with final status
-                setTransfer(response.data);
+                // Update transfer with final status (normalize to uppercase)
+                setTransfer({
+                    ...response.data,
+                    status: status as 'PENDING' | 'COMPLETE' | 'FAILED'
+                });
                 onTransferComplete?.(response.data);
             }
         } catch (err) {
@@ -560,18 +565,25 @@ export function CircleTransferModal({
                 }
             );
 
-            setTransfer(response.data);
+            // Normalize status to uppercase (backend returns lowercase)
+            const normalizedStatus = response.data.status?.toUpperCase() as 'PENDING' | 'COMPLETE' | 'FAILED';
+            const normalizedTransfer = {
+                ...response.data,
+                status: normalizedStatus
+            };
+
+            setTransfer(normalizedTransfer);
             setTransferState('success');
 
             // If status is PENDING, start polling for updates
             // Use circle_transfer_id for polling as it's more reliable
-            if (response.data.status === 'PENDING') {
+            if (normalizedStatus === 'PENDING') {
                 const pollId = response.data.circle_transfer_id || response.data.transfer_id;
                 pollingRef.current = setInterval(() => {
                     pollTransferStatus(pollId);
                 }, 2000); // Poll every 2 seconds
             } else {
-                onTransferComplete?.(response.data);
+                onTransferComplete?.(normalizedTransfer);
             }
         } catch (err: unknown) {
             console.error('Transfer failed:', err);
