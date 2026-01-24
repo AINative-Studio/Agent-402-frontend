@@ -122,6 +122,63 @@ export function useCircleWallet(projectId?: string, agentDid?: string) {
 }
 
 /**
+ * useCircleWalletById - Fetch Circle wallet by wallet ID directly
+ *
+ * @param projectId - The project ID
+ * @param walletId - The Circle wallet ID
+ * @returns Wallet data, loading state, error, and refresh function
+ */
+export function useCircleWalletById(projectId?: string, walletId?: string) {
+    const queryClient = useQueryClient();
+
+    const query = useQuery({
+        queryKey: ['circle-wallet', projectId, walletId],
+        queryFn: async () => {
+            const { data } = await apiClient.get<{
+                wallet_id: string;
+                circle_wallet_id: string;
+                blockchain_address: string;
+                balance: string;
+                status: string;
+                blockchain: string;
+                wallet_type: string;
+                description: string;
+            }>(`/${projectId}/circle/wallets/${walletId}`);
+            // Convert to CircleWalletWithBalance format
+            return {
+                walletId: data.wallet_id || data.circle_wallet_id,
+                address: data.blockchain_address,
+                blockchain: data.blockchain,
+                state: data.status === 'active' ? 'LIVE' : 'FROZEN',
+                createDate: '',
+                updateDate: '',
+                balances: [{ amount: data.balance || '0', currency: 'USD' }],
+            } as CircleWalletWithBalance;
+        },
+        enabled: !!projectId && !!walletId,
+        staleTime: 30000,
+        refetchInterval: 60000,
+    });
+
+    const refresh = () => {
+        if (projectId && walletId) {
+            queryClient.invalidateQueries({
+                queryKey: ['circle-wallet', projectId, walletId]
+            });
+        }
+    };
+
+    return {
+        wallet: query.data,
+        isLoading: query.isLoading,
+        isRefetching: query.isRefetching,
+        error: query.error,
+        refresh,
+        refetch: query.refetch,
+    };
+}
+
+/**
  * useCircleWallets - Fetch all Circle wallets for a project
  *
  * @param projectId - The project ID

@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import {
     useCircleWallet,
+    useCircleWalletById,
     getUSDCBalance,
     truncateAddress,
     type CircleWalletWithBalance,
@@ -15,8 +16,10 @@ import { cn } from '@/lib/utils';
 interface CircleWalletBalanceProps {
     /** Project ID for API calls */
     projectId: string;
-    /** Agent DID to fetch wallet for */
-    agentDid: string;
+    /** Agent DID to fetch wallet for (legacy) */
+    agentDid?: string;
+    /** Circle Wallet ID to fetch directly */
+    walletId?: string;
     /** Optional compact mode for card display */
     compact?: boolean;
     /** Optional custom class name */
@@ -210,14 +213,24 @@ function CompactWalletDisplay({
 export function CircleWalletBalance({
     projectId,
     agentDid,
+    walletId,
     compact = false,
     className,
     showRefresh = true,
 }: CircleWalletBalanceProps) {
-    const { wallet, isLoading, isRefetching, error, refresh } = useCircleWallet(
-        projectId,
-        agentDid
+    // Use wallet ID if provided, otherwise fall back to agent DID
+    const byIdResult = useCircleWalletById(
+        walletId ? projectId : undefined,
+        walletId
     );
+    const byDidResult = useCircleWallet(
+        !walletId && agentDid ? projectId : undefined,
+        !walletId ? agentDid : undefined
+    );
+
+    const { wallet, isLoading, isRefetching, error, refresh } = walletId
+        ? byIdResult
+        : byDidResult;
 
     if (isLoading) {
         return <CircleWalletSkeleton compact={compact} />;
@@ -333,16 +346,19 @@ export function CircleWalletBalance({
 export function CircleWalletCompact({
     projectId,
     agentDid,
+    walletId,
     className,
 }: {
     projectId: string;
-    agentDid: string;
+    agentDid?: string;
+    walletId?: string;
     className?: string;
 }) {
     return (
         <CircleWalletBalance
             projectId={projectId}
             agentDid={agentDid}
+            walletId={walletId}
             compact
             className={className}
             showRefresh={false}

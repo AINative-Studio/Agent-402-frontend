@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 
 /**
  * Agent data for display (demo data matching design spec)
- * DIDs match the registered agents on Arc Testnet
+ * Circle wallet IDs for the 3 agents on ARC-TESTNET
  */
 const DEMO_AGENTS = [
     {
@@ -29,6 +29,8 @@ const DEMO_AGENTS = [
         role: 'Market Analyst',
         did: 'did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK',
         displayDid: 'did:key:z6MkhaXgB2DvotDkL5257f...',
+        circleWalletId: '699e2ea4-f508-5afa-a1bd-5a8f648bedf1',
+        walletAddress: '0x6bd005d0c4970c32f4b6e3b2121785ab1f0dabdb',
         description: 'Provides market analysis and investment insights',
         trustTier: 0,
         hourlyRate: 35,
@@ -40,8 +42,10 @@ const DEMO_AGENTS = [
         tokenId: 1,
         name: 'Compliance Officer',
         role: 'Compliance',
-        did: 'did:key:z6Mki9E8kZT3ybvrYqVqJQrW9vHn6YuVjAVdHqzBGbYQk2Jp',
-        displayDid: 'did:key:z6Mkl9E8kZT3ybvrYqVqJQ...',
+        did: 'did:key:z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH',
+        displayDid: 'did:key:z6MkpTHR8VNsBxYAAWHut2...',
+        circleWalletId: '6a4f70de-aae1-5819-9aa4-7e94084bd2bb',
+        walletAddress: '0x460b48cbc8814a51fc6ad0cef740a44c0eb73fd9',
         description: 'Ensures regulatory compliance and risk management',
         trustTier: 0,
         hourlyRate: 50,
@@ -53,8 +57,10 @@ const DEMO_AGENTS = [
         tokenId: 2,
         name: 'Transaction Agent',
         role: 'Transaction Processor',
-        did: 'did:key:z6MkkKQ3EbHjE4VPZqL6LS2b4kXy7nZvJqW9vHn6YuVjAVdH',
-        displayDid: 'did:key:z6MkxkQ3EbhjE4VPZqL6LS...',
+        did: 'did:key:z6MkrCD1cSyGCbLzADCiDCzKJMNpTqSrUMRBwmTJM5hJ6dCG',
+        displayDid: 'did:key:z6MkrCD1cSyGCbLzADCiDC...',
+        circleWalletId: '9fe6cff6-e176-5130-a9c2-bfeca5e31008',
+        walletAddress: '0x40889b44ef4ad7bbb921ef68ff9ee7bfbdfbd50e',
         description: 'Executes and monitors financial transactions',
         trustTier: 0,
         hourlyRate: 25,
@@ -183,10 +189,10 @@ function AgentCard({
                             <Circle className="w-3 h-3 text-blue-400" />
                             Circle Wallet
                         </span>
-                        {projectId ? (
+                        {projectId && agent.circleWalletId ? (
                             <CircleWalletCompact
                                 projectId={projectId}
-                                agentDid={agent.did}
+                                walletId={agent.circleWalletId}
                             />
                         ) : (
                             <span className="text-xs text-muted-foreground">Select project</span>
