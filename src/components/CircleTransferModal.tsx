@@ -228,36 +228,44 @@ function TransferSuccess({
                 </div>
             </div>
 
-            {/* Transfer Flow Visualization */}
-            <div className="bg-card/50 rounded-lg p-4 border border-border">
-                <div className="flex items-center justify-between gap-4">
-                    {/* Source Wallet */}
-                    <div className="flex-1">
-                        <div className={cn('p-3 rounded-lg border', getRoleColor(sourceWallet.role))}>
-                            <div className="flex items-center gap-2 mb-2">
-                                <Wallet className="w-4 h-4" />
-                                <span className="font-medium text-sm">{sourceWallet.name}</span>
+            {/* Transfer Flow Visualization - Vertical Layout */}
+            <div className="bg-card/50 rounded-lg p-4 border border-border space-y-3">
+                {/* Source Wallet */}
+                <div className={cn('p-4 rounded-lg border', getRoleColor(sourceWallet.role))}>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                                <Wallet className="w-5 h-5 text-blue-400" />
                             </div>
-                            <AddressWithCopy address={sourceWallet.address} />
-                        </div>
-                    </div>
-
-                    {/* Arrow */}
-                    <div className="flex-shrink-0">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 flex items-center justify-center border border-blue-500/30">
-                            <ArrowRight className="w-5 h-5 text-blue-400" />
-                        </div>
-                    </div>
-
-                    {/* Destination Wallet */}
-                    <div className="flex-1">
-                        <div className={cn('p-3 rounded-lg border', getRoleColor(destWallet.role))}>
-                            <div className="flex items-center gap-2 mb-2">
-                                <Wallet className="w-4 h-4" />
-                                <span className="font-medium text-sm">{destWallet.name}</span>
+                            <div>
+                                <span className="font-semibold">{sourceWallet.name}</span>
+                                <p className="text-xs text-muted-foreground">From</p>
                             </div>
-                            <AddressWithCopy address={destWallet.address} />
                         </div>
+                        <AddressWithCopy address={sourceWallet.address} />
+                    </div>
+                </div>
+
+                {/* Arrow */}
+                <div className="flex justify-center">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-b from-blue-500/20 to-purple-500/20 flex items-center justify-center border border-blue-500/30">
+                        <ArrowRight className="w-4 h-4 text-blue-400 rotate-90" />
+                    </div>
+                </div>
+
+                {/* Destination Wallet */}
+                <div className={cn('p-4 rounded-lg border', getRoleColor(destWallet.role))}>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                                <Wallet className="w-5 h-5 text-green-400" />
+                            </div>
+                            <div>
+                                <span className="font-semibold">{destWallet.name}</span>
+                                <p className="text-xs text-muted-foreground">To</p>
+                            </div>
+                        </div>
+                        <AddressWithCopy address={destWallet.address} />
                     </div>
                 </div>
             </div>
@@ -267,7 +275,7 @@ function TransferSuccess({
                 <div className="flex items-center justify-between py-2 border-b border-border">
                     <span className="text-sm text-muted-foreground">Transfer ID</span>
                     <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs">{truncateAddress(transfer.transfer_id, 8)}</span>
+                        <span className="font-mono text-xs bg-muted/50 px-2 py-1 rounded">{truncateAddress(transfer.transfer_id, 12)}</span>
                         <button
                             onClick={() => navigator.clipboard.writeText(transfer.transfer_id)}
                             className="text-muted-foreground hover:text-foreground transition-colors"
@@ -306,7 +314,7 @@ function TransferSuccess({
                     <div className="flex items-center justify-between py-2">
                         <span className="text-sm text-muted-foreground">Tx Hash</span>
                         <div className="flex items-center gap-2">
-                            <span className="font-mono text-xs">{truncateAddress(transfer.transaction_hash, 8)}</span>
+                            <span className="font-mono text-xs bg-green-500/10 text-green-400 px-2 py-1 rounded">{truncateAddress(transfer.transaction_hash, 10)}</span>
                             <button
                                 onClick={() => navigator.clipboard.writeText(transfer.transaction_hash!)}
                                 className="text-muted-foreground hover:text-foreground transition-colors"
@@ -516,7 +524,7 @@ export function CircleTransferModal({
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-lg">
                 {transferState === 'form' && (
                     <>
                         <DialogHeader>
