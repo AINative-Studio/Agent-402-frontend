@@ -173,7 +173,7 @@ function AddressWithCopy({ address, label }: { address: string; label?: string }
                 )}
             </button>
             <a
-                href={`https://testnet.arcscan.io/address/${address}`}
+                href={`https://testnet.arcscan.app/address/${address}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-foreground transition-colors"
@@ -295,24 +295,44 @@ function TransferSuccess({
                         {transfer.status}
                     </Badge>
                 </div>
-                <div className="flex items-center justify-between py-2">
+                <div className="flex items-center justify-between py-2 border-b border-border">
                     <span className="text-sm text-muted-foreground">Network</span>
                     <span className="text-sm flex items-center gap-2">
                         <Sparkles className="w-3 h-3 text-purple-400" />
-                        Polygon Amoy Testnet
+                        ARC Testnet
                     </span>
                 </div>
+                {transfer.transaction_hash && (
+                    <div className="flex items-center justify-between py-2">
+                        <span className="text-sm text-muted-foreground">Tx Hash</span>
+                        <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs">{truncateAddress(transfer.transaction_hash, 8)}</span>
+                            <button
+                                onClick={() => navigator.clipboard.writeText(transfer.transaction_hash!)}
+                                className="text-muted-foreground hover:text-foreground transition-colors"
+                                title="Copy Transaction Hash"
+                            >
+                                <Copy className="w-3 h-3" />
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {/* Explorer Link */}
+            {/* Explorer Link - Link to transaction if hash available, otherwise to address */}
             <a
-                href={`https://testnet.arcscan.io/address/${destWallet.address}`}
+                href={transfer.transaction_hash
+                    ? `https://testnet.arcscan.app/tx/${transfer.transaction_hash}`
+                    : `https://testnet.arcscan.app/address/${destWallet.address}`
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-3 rounded-lg bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/30 hover:from-blue-500/20 hover:to-purple-500/20 transition-all group"
             >
                 <ArrowUpRight className="w-4 h-4 text-blue-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                <span className="text-sm font-medium">View on Arc Block Explorer</span>
+                <span className="text-sm font-medium">
+                    {transfer.transaction_hash ? 'View Transaction on Arc Explorer' : 'View Wallet on Arc Explorer'}
+                </span>
             </a>
 
             {/* Close Button */}

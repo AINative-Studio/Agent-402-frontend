@@ -318,11 +318,11 @@ export function CircleWalletBalance({
                         <AddressDisplay address={wallet.address} />
                         {wallet.address && (
                             <a
-                                href={`https://polygonscan.com/address/${wallet.address}`}
+                                href={`https://testnet.arcscan.app/address/${wallet.address}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-muted-foreground hover:text-foreground transition-colors"
-                                title="View on explorer"
+                                title="View on Arc Explorer"
                             >
                                 <ExternalLink className="w-3 h-3" />
                             </a>
