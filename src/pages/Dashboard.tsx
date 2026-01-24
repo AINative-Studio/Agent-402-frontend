@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Bot, Users, DollarSign, Shield, AlertTriangle, Calendar, Info, TrendingUp, ShieldCheck, ArrowLeftRight } from 'lucide-react';
+import { Bot, Users, DollarSign, Shield, AlertTriangle, Calendar, Info, TrendingUp, ShieldCheck, ArrowLeftRight, Circle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,18 +12,22 @@ import {
 } from '@/components/ui/select';
 import { HireAgentModal } from '../components/HireAgentModal';
 import { FeedbackForm } from '../components/FeedbackForm';
+import { CircleWalletCompact } from '../components/CircleWalletBalance';
 import { useWallet, useAgentRegistry, useAgentTreasury, useReputationRegistry } from '../hooks/useWallet';
+import { useProject } from '../hooks/useProject';
 import { cn } from '@/lib/utils';
 
 /**
  * Agent data for display (demo data matching design spec)
+ * DIDs match the registered agents on Arc Testnet
  */
 const DEMO_AGENTS = [
     {
         tokenId: 0,
         name: 'Financial Analyst',
         role: 'Market Analyst',
-        did: 'did:key:z6MkhaXgB2DvotDkL5257f...',
+        did: 'did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK',
+        displayDid: 'did:key:z6MkhaXgB2DvotDkL5257f...',
         description: 'Provides market analysis and investment insights',
         trustTier: 0,
         hourlyRate: 35,
@@ -35,7 +39,8 @@ const DEMO_AGENTS = [
         tokenId: 1,
         name: 'Compliance Officer',
         role: 'Compliance',
-        did: 'did:key:z6Mkl9E8kZT3ybvrYqVqJQ...',
+        did: 'did:key:z6Mki9E8kZT3ybvrYqVqJQrW9vHn6YuVjAVdHqzBGbYQk2Jp',
+        displayDid: 'did:key:z6Mkl9E8kZT3ybvrYqVqJQ...',
         description: 'Ensures regulatory compliance and risk management',
         trustTier: 0,
         hourlyRate: 50,
@@ -47,7 +52,8 @@ const DEMO_AGENTS = [
         tokenId: 2,
         name: 'Transaction Agent',
         role: 'Transaction Processor',
-        did: 'did:key:z6MkxkQ3EbhjE4VPZqL6LS...',
+        did: 'did:key:z6MkkKQ3EbHjE4VPZqL6LS2b4kXy7nZvJqW9vHn6YuVjAVdH',
+        displayDid: 'did:key:z6MkxkQ3EbhjE4VPZqL6LS...',
         description: 'Executes and monitors financial transactions',
         trustTier: 0,
         hourlyRate: 25,
@@ -112,10 +118,12 @@ function StatsCard({
  */
 function AgentCard({
     agent,
+    projectId,
     onHire,
     onDetails,
 }: {
     agent: typeof DEMO_AGENTS[0];
+    projectId?: string;
     onHire: () => void;
     onDetails: () => void;
 }) {
@@ -160,10 +168,29 @@ function AgentCard({
                     </p>
                 </div>
 
-                {/* Treasury Balance */}
-                <div className="flex items-center justify-between py-2 border-y border-border">
-                    <span className="text-sm text-muted-foreground">Treasury Balance</span>
-                    <span className="font-mono font-medium">0.00 USDC</span>
+                {/* Wallets Section */}
+                <div className="space-y-2 py-2 border-y border-border">
+                    {/* On-chain Treasury Balance */}
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">On-chain Treasury</span>
+                        <span className="font-mono font-medium text-green-400">$0.00 USDC</span>
+                    </div>
+
+                    {/* Circle Wallet Balance */}
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Circle className="w-3 h-3 text-blue-400" />
+                            Circle Wallet
+                        </span>
+                        {projectId ? (
+                            <CircleWalletCompact
+                                projectId={projectId}
+                                agentDid={agent.did}
+                            />
+                        ) : (
+                            <span className="text-xs text-muted-foreground">Select project</span>
+                        )}
+                    </div>
                 </div>
 
                 {/* Trust Tier and Reviews */}
@@ -181,7 +208,7 @@ function AgentCard({
                 {/* DID */}
                 <div className="flex items-center gap-2 text-sm">
                     <span className="text-muted-foreground">DID:</span>
-                    <span className="font-mono text-xs truncate">{agent.did}</span>
+                    <span className="font-mono text-xs truncate">{agent.displayDid}</span>
                 </div>
 
                 {/* Registered Date */}
@@ -226,9 +253,13 @@ function AgentCard({
 export function Dashboard() {
     const { isConnected } = useWallet();
     const { totalAgents } = useAgentRegistry();
+    const { currentProject } = useProject();
     // Keep hooks for potential future use with live data
     useAgentTreasury();
     useReputationRegistry();
+
+    // Get project ID for Circle wallet queries
+    const projectId = currentProject?.project_id || currentProject?.id;
 
     // Filter state
     const [roleFilter, setRoleFilter] = useState('All Roles');
@@ -373,6 +404,7 @@ export function Dashboard() {
                     <AgentCard
                         key={agent.tokenId}
                         agent={agent}
+                        projectId={projectId}
                         onHire={() => handleHireClick(agent)}
                         onDetails={() => handleDetailsClick(agent)}
                     />
