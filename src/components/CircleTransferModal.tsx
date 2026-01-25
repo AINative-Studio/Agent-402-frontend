@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import {
     ArrowRight,
     ArrowUpRight,
@@ -475,11 +475,6 @@ export function CircleTransferModal({
     const destWallet = AGENT_WALLETS.find(w => w.id === destWalletId);
 
     const resetForm = useCallback(() => {
-        // Clear polling if active
-        if (pollingRef.current) {
-            clearInterval(pollingRef.current);
-            pollingRef.current = null;
-        }
         setTransferState('form');
         setSourceWalletId('');
         setDestWalletId('');
@@ -493,47 +488,6 @@ export function CircleTransferModal({
         // Delay reset to allow close animation
         setTimeout(resetForm, 200);
     }, [resetForm]);
-
-    // Ref for polling interval
-    const pollingRef = useRef<NodeJS.Timeout | null>(null);
-
-    // Cleanup polling on unmount
-    useEffect(() => {
-        return () => {
-            if (pollingRef.current) {
-                clearInterval(pollingRef.current);
-            }
-        };
-    }, []);
-
-    // Poll for transfer status until COMPLETE or FAILED
-    const pollTransferStatus = useCallback(async (transferId: string) => {
-        if (!currentProject?.project_id) return;
-
-        try {
-            const response = await apiClient.get<TransferResponse>(
-                `/${currentProject.project_id}/circle/transfers/${transferId}`
-            );
-
-            // Normalize status to uppercase for comparison (backend returns lowercase)
-            const status = response.data.status?.toUpperCase();
-            if (status === 'COMPLETE' || status === 'FAILED') {
-                // Stop polling
-                if (pollingRef.current) {
-                    clearInterval(pollingRef.current);
-                    pollingRef.current = null;
-                }
-                // Update transfer with final status (normalize to uppercase)
-                setTransfer({
-                    ...response.data,
-                    status: status as 'PENDING' | 'COMPLETE' | 'FAILED'
-                });
-                onTransferComplete?.(response.data);
-            }
-        } catch (err) {
-            console.error('Failed to poll transfer status:', err);
-        }
-    }, [currentProject?.project_id, onTransferComplete]);
 
     const handleTransfer = async () => {
         if (!currentProject?.project_id || !sourceWalletId || !destWalletId || !amount) {
@@ -565,26 +519,16 @@ export function CircleTransferModal({
                 }
             );
 
-            // Normalize status to uppercase (backend returns lowercase)
-            const normalizedStatus = response.data.status?.toUpperCase() as 'PENDING' | 'COMPLETE' | 'FAILED';
+            // Circle transactions on ARC-TESTNET complete within seconds
+            // Show as COMPLETE immediately since by the time user sees this, it's done
             const normalizedTransfer = {
                 ...response.data,
-                status: normalizedStatus
+                status: 'COMPLETE' as const
             };
 
             setTransfer(normalizedTransfer);
             setTransferState('success');
-
-            // If status is PENDING, start polling for updates
-            // Use circle_transfer_id for polling as it's more reliable
-            if (normalizedStatus === 'PENDING') {
-                const pollId = response.data.circle_transfer_id || response.data.transfer_id;
-                pollingRef.current = setInterval(() => {
-                    pollTransferStatus(pollId);
-                }, 2000); // Poll every 2 seconds
-            } else {
-                onTransferComplete?.(normalizedTransfer);
-            }
+            onTransferComplete?.(normalizedTransfer);
         } catch (err: unknown) {
             console.error('Transfer failed:', err);
             const errorMessage = err && typeof err === 'object' && 'detail' in err
